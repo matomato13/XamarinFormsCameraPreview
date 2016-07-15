@@ -16,9 +16,11 @@ namespace XamarinFormsCameraPreview.Views
 		{
 			InitializeComponent();
 
-			// The CameraPreview have to be created in the code behind.
-			// The instance of camera preview uses platform-specified modules and it causes crash if it is defined in XAML.
-			preview_ = new CameraPreview();
+            NavigationPage.SetHasNavigationBar(this, false);
+
+            // The CameraPreview have to be created in the code behind.
+            // The instance of camera preview uses platform-specified modules and it causes crash if it is defined in XAML.
+            preview_ = new CameraPreview();
 			preview_.PictureTaken += preview__PictureTaken;
 			gridCameraPreview_.Children.Add(preview_);
 		}
