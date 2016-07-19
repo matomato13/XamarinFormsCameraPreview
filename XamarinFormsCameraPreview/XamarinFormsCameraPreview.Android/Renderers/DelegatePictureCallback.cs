@@ -1,14 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-using Android.App;
-using Android.Content;
-using Android.OS;
-using Android.Runtime;
-using Android.Views;
-using Android.Widget;
 using Android.Hardware;
 
 namespace XamarinFormsCameraPreview.Droid.Renderers
@@ -17,14 +7,9 @@ namespace XamarinFormsCameraPreview.Droid.Renderers
 	{
 		public Action<byte[], Camera> PictureTaken { get; set; }
 
-		#region IPictureCallback ÉÅÉìÉoÅ[
-
 		public void OnPictureTaken(byte[] data, Camera camera)
 		{
-			if (PictureTaken != null) {
-				PictureTaken(data, camera);
-			}
-		}
-		#endregion
+            PictureTaken?.Invoke(data, camera);
+        }
 	}
 }
