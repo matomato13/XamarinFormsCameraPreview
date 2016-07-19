@@ -26,7 +26,6 @@ namespace XamarinFormsCameraPreview.Droid.Renderers
 	    private FrameLayout _frameLayout;
 
         private bool _busy;
-        private byte[] _bgrData;
         private Point[] _lastContourDetected;
         private byte[] _lastPreviewFrame;
         private ImageView _overlay;
@@ -90,8 +89,11 @@ namespace XamarinFormsCameraPreview.Droid.Renderers
                                 CvInvoke.CvtColor(yuv420sp, bgr, ColorConversion.Yuv420Sp2Bgr);
 
                                 var image = bgr.Rotate(CameraHelper.GetRotationAngle(Context), new Bgr(255, 255, 255), false);
+                                var rotatedSize = image.Size.Width > image.Size.Height
+                                    ? _resizedSize
+                                    : new Size(_resizedSize.Height, _resizedSize.Width);
 
-                                var orderedPoints = GeometryHelper.ToScaledPointFArray(_lastContourDetected, new Size(image.Width, image.Height), _resizedSize);
+                                var orderedPoints = GeometryHelper.ToScaledPointFArray(_lastContourDetected, image.Size, rotatedSize);
                                 var warped = GeometryHelper.FourPointTransform(image, orderedPoints);
 
                                 if (!getColoredResult)
@@ -142,23 +144,14 @@ namespace XamarinFormsCameraPreview.Droid.Renderers
                     // keep it for later if needed
                     _lastPreviewFrame = (byte[])data.Clone();
 
-                    Size newSize;
-                    data = RotateCounterClockwiseIfNeeded(data, camera.GetParameters().PreviewSize, out newSize);
+                    var pictureSize = camera.GetParameters().PreviewSize;
+                    _resizedSize = new Size((int)(pictureSize.Width / 1.5), (int)(pictureSize.Height / 1.5));
 
                     var handle = GCHandle.Alloc(data, GCHandleType.Pinned);
-
-                    if (_bgrData == null || _bgrData.Length < newSize.Width * newSize.Height)
-                    {
-                        _bgrData = new byte[newSize.Width * newSize.Height * 3];
-                    }
-                    
-                    _resizedSize = new Size((int)(newSize.Width / 1.5), (int)(newSize.Height / 1.5));
-
-                    var bgrHandle = GCHandle.Alloc(_bgrData, GCHandleType.Pinned);
-                    using (var grey = new Image<Gray, byte>(newSize.Width, newSize.Height, newSize.Width, handle.AddrOfPinnedObject()))
+                    using (var grey = new Image<Gray, byte>(pictureSize.Width, pictureSize.Height, pictureSize.Width, handle.AddrOfPinnedObject()))
                     using (var resized = new Image<Gray, byte>(_resizedSize))
                     using (var gaussian = new Image<Gray, byte>(_resizedSize))
-                    using (var canny = new Image<Gray, byte>(_resizedSize.Width, _resizedSize.Height, _resizedSize.Width, bgrHandle.AddrOfPinnedObject()))
+                    using (var canny = new Image<Gray, byte>(_resizedSize))
                     {
                         // resize to make image processing faster
                         CvInvoke.Resize(grey, resized, _resizedSize);
@@ -169,9 +162,11 @@ namespace XamarinFormsCameraPreview.Droid.Renderers
                         // canny edge detection
                         CvInvoke.Canny(gaussian, canny, 15, 40);
 
+                        var rotated = canny.Rotate(CameraHelper.GetRotationAngle(Context), new Gray(255), false);
+
                         // test stuff
                         var element = CvInvoke.GetStructuringElement(ElementShape.Rectangle, new Size(5, 5), new Point(1, 1));
-                        CvInvoke.MorphologyEx(canny, canny, MorphOp.Close, element, new Point(-1, -1), 1, BorderType.Constant, CvInvoke.MorphologyDefaultBorderValue);
+                        CvInvoke.MorphologyEx(rotated, rotated, MorphOp.Close, element, new Point(-1, -1), 1, BorderType.Constant, CvInvoke.MorphologyDefaultBorderValue);
                         //CvInvoke.Dilate(canny, canny, null, new System.Drawing.Point(-1, -1), 3, BorderType.Constant, CvInvoke.MorphologyDefaultBorderValue);
 
                         //_overlay.SetImageBitmap(canny.Bitmap);
@@ -181,7 +176,7 @@ namespace XamarinFormsCameraPreview.Droid.Renderers
 
                         // find contours
                         var contoursDetected = new VectorOfVectorOfPoint();
-                        CvInvoke.FindContours(canny, contoursDetected, null, RetrType.List, ChainApproxMethod.ChainApproxSimple);
+                        CvInvoke.FindContours(rotated, contoursDetected, null, RetrType.List, ChainApproxMethod.ChainApproxSimple);
 
                         // get more info on contours
                         var approxContours = contoursDetected.ToArrayOfArray().Select(x =>
@@ -216,7 +211,7 @@ namespace XamarinFormsCameraPreview.Droid.Renderers
                         var biggestContour = approxContours.Where(x => x.ApproxContour.Size == 4 && x.ApproxIsRectangle)
                             .OrderByDescending(x => x.ApproxArea).FirstOrDefault();
 
-                        using (var bgrContour = new Image<Bgra, byte>(_resizedSize))
+                        using (var bgrContour = new Image<Bgra, byte>(rotated.Size))
                         {
                             if (debug)
                             {
@@ -306,41 +301,6 @@ namespace XamarinFormsCameraPreview.Droid.Renderers
                 _camera.Dispose();
                 _camera = null;
             }
-        }
-
-        private byte[] RotateCounterClockwiseIfNeeded(byte[] data, Camera.Size originalSize, out Size newSize)
-        {
-            var rotate = false;
-
-            // calling originalSize.Width or originalSize.Height is very slow, so we keep the value in a variable
-            var originalWidth = originalSize.Width;
-            var originalHeight = originalSize.Height;
-
-            newSize = new Size(originalWidth, originalHeight);
-
-            var cDegrees = CameraHelper.GetRotationAngle(Context);
-
-            if (cDegrees == 90 || cDegrees == 270)
-            {
-                rotate = true;
-                newSize.Width = originalHeight;
-                newSize.Height = originalWidth;
-            }
-
-            if (!rotate)
-            {
-                return data;
-            }
-
-            var rotatedData = new byte[data.Length];
-            for (var y = 0; y < originalHeight; y++)
-            {
-                for (var x = 0; x < originalWidth; x++)
-                {
-                    rotatedData[x * originalHeight + originalHeight - y - 1] = data[x + y * originalWidth];
-                }
-            }
-            return rotatedData;
         }
 
         private void SaveImage(Bitmap bitmap, string name)
