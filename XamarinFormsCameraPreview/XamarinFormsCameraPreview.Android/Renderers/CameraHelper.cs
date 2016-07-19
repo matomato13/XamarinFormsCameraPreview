@@ -1,15 +1,64 @@
 using System;
 using System.Collections.Generic;
-using Android.Content;
+using System.Drawing;
 using Android.Hardware;
-using Android.Runtime;
 using Android.Views;
 
 namespace XamarinFormsCameraPreview.Droid.Renderers
 {
     public static class CameraHelper
     {
-        public static Camera.CameraInfo GetCameraInfo()
+        public static int GetRotationAngle(SurfaceOrientation orientation)
+        {
+            var degrees = 0;
+            switch (orientation)
+            {
+                case SurfaceOrientation.Rotation0:
+                    break;
+                case SurfaceOrientation.Rotation90:
+                    degrees = 90;
+                    break;
+                case SurfaceOrientation.Rotation180:
+                    degrees = 180;
+                    break;
+                case SurfaceOrientation.Rotation270:
+                    degrees = 270;
+                    break;
+            }
+
+            return (GetCameraInfo().Orientation - degrees + 360) % 360;
+        }
+
+        public static Size SetCameraParameters(SurfaceOrientation deviceOrientation, Camera camera, int width, int height)
+        {
+            var parameters = camera.GetParameters();
+
+            // Set AutoFocus
+            if (parameters.SupportedFocusModes.Contains(Camera.Parameters.FocusModeContinuousPicture))
+                parameters.FocusMode = Camera.Parameters.FocusModeContinuousPicture;
+            else if (parameters.SupportedFocusModes.Contains(Camera.Parameters.FocusModeContinuousVideo))
+                parameters.FocusMode = Camera.Parameters.FocusModeContinuousVideo;
+            else
+                parameters.FocusMode = Camera.Parameters.FocusModeAuto;
+
+            var rotationAngle = GetRotationAngle(deviceOrientation);
+            var isPortrait = rotationAngle == 90 || rotationAngle == 270;
+
+            var previewSize = GetOptimalPreviewSize(parameters.SupportedPreviewSizes, isPortrait ? height : width, isPortrait ? width : height);
+
+            parameters.SetPreviewSize(previewSize.Width, previewSize.Height);
+            parameters.SetPictureSize(previewSize.Width, previewSize.Height);
+
+            // Rotate preview and final picture
+            camera.SetDisplayOrientation(rotationAngle);
+            parameters.SetRotation(rotationAngle);
+
+            camera.SetParameters(parameters);
+
+            return new Size(previewSize.Width, previewSize.Height);
+        }
+
+        private static Camera.CameraInfo GetCameraInfo()
         {
             // Find the total number of cameras available
             var numberOfCameras = Camera.NumberOfCameras;
@@ -28,55 +77,7 @@ namespace XamarinFormsCameraPreview.Droid.Renderers
             return cameraInfo;
         }
 
-        public static int GetRotationAngle(Context context)
-        {
-            var degrees = 0;
-            switch (context.GetSystemService(Context.WindowService).JavaCast<IWindowManager>().DefaultDisplay.Rotation)
-            {
-                case SurfaceOrientation.Rotation0:
-                    break;
-                case SurfaceOrientation.Rotation90:
-                    degrees = 90;
-                    break;
-                case SurfaceOrientation.Rotation180:
-                    degrees = 180;
-                    break;
-                case SurfaceOrientation.Rotation270:
-                    degrees = 270;
-                    break;
-            }
-
-            return (GetCameraInfo().Orientation - degrees + 360) % 360;
-        }
-
-        public static void SetCameraParameters(Context context, Camera camera, int width, int height)
-        {
-            var parameters = camera.GetParameters();
-
-            // Set AutoFocus
-            if (parameters.SupportedFocusModes.Contains(Camera.Parameters.FocusModeContinuousPicture))
-                parameters.FocusMode = Camera.Parameters.FocusModeContinuousPicture;
-            else if (parameters.SupportedFocusModes.Contains(Camera.Parameters.FocusModeContinuousVideo))
-                parameters.FocusMode = Camera.Parameters.FocusModeContinuousVideo;
-            else
-                parameters.FocusMode = Camera.Parameters.FocusModeAuto;
-
-            var rotationAngle = GetRotationAngle(context);
-            var isPortrait = rotationAngle == 90 || rotationAngle == 270;
-
-            var previewSize = GetOptimalPreviewSize(parameters.SupportedPreviewSizes, isPortrait ? height : width, isPortrait ? width : height);
-
-            parameters.SetPreviewSize(previewSize.Width, previewSize.Height);
-            parameters.SetPictureSize(previewSize.Width, previewSize.Height);
-
-            // Rotate preview and final picture
-            camera.SetDisplayOrientation(rotationAngle);
-            parameters.SetRotation(rotationAngle);
-
-            camera.SetParameters(parameters);
-        }
-
-        public static Camera.Size GetOptimalPreviewSize(IList<Camera.Size> sizes, int w, int h)
+        private static Camera.Size GetOptimalPreviewSize(IList<Camera.Size> sizes, int w, int h)
         {
             const double ASPECT_TOLERANCE = 0.1;
             var targetRatio = (double)w / h;

@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using Android.Graphics;
+using Android.Runtime;
 using Android.Views;
 using Android.Widget;
 using Emgu.CV;
@@ -30,6 +31,8 @@ namespace XamarinFormsCameraPreview.Droid.Renderers
         private byte[] _lastPreviewFrame;
         private ImageView _overlay;
         private Size _resizedSize;
+        private Size _previewSize;
+        private SurfaceOrientation _deviceOrientation;
 
         protected override void OnElementChanged(ElementChangedEventArgs<CameraPreview> e)
 		{
@@ -78,9 +81,8 @@ namespace XamarinFormsCameraPreview.Droid.Renderers
                         {
                             _busy = true;
 
-                            var pictureSize = _camera.GetParameters().PreviewSize;
-                            var width = pictureSize.Width;
-                            var height = pictureSize.Height;
+                            var width = _previewSize.Width;
+                            var height = _previewSize.Height;
 
                             var handle = GCHandle.Alloc(_lastPreviewFrame, GCHandleType.Pinned);
                             using (var yuv420sp = new Image<Gray, byte>(width, (height >> 1) * 3, width, handle.AddrOfPinnedObject()))
@@ -88,7 +90,7 @@ namespace XamarinFormsCameraPreview.Droid.Renderers
                             {
                                 CvInvoke.CvtColor(yuv420sp, bgr, ColorConversion.Yuv420Sp2Bgr);
 
-                                var image = bgr.Rotate(CameraHelper.GetRotationAngle(Context), new Bgr(255, 255, 255), false);
+                                var image = bgr.Rotate(CameraHelper.GetRotationAngle(_deviceOrientation), new Bgr(255, 255, 255), false);
                                 var rotatedSize = image.Size.Width > image.Size.Height
                                     ? _resizedSize
                                     : new Size(_resizedSize.Height, _resizedSize.Width);
@@ -144,11 +146,10 @@ namespace XamarinFormsCameraPreview.Droid.Renderers
                     // keep it for later if needed
                     _lastPreviewFrame = (byte[])data.Clone();
 
-                    var pictureSize = camera.GetParameters().PreviewSize;
-                    _resizedSize = new Size((int)(pictureSize.Width / 1.5), (int)(pictureSize.Height / 1.5));
+                    _resizedSize = new Size((int)(_previewSize.Width / 1.5), (int)(_previewSize.Height / 1.5));
 
                     var handle = GCHandle.Alloc(data, GCHandleType.Pinned);
-                    using (var grey = new Image<Gray, byte>(pictureSize.Width, pictureSize.Height, pictureSize.Width, handle.AddrOfPinnedObject()))
+                    using (var grey = new Image<Gray, byte>(_previewSize.Width, _previewSize.Height, _previewSize.Width, handle.AddrOfPinnedObject()))
                     using (var resized = new Image<Gray, byte>(_resizedSize))
                     using (var gaussian = new Image<Gray, byte>(_resizedSize))
                     using (var canny = new Image<Gray, byte>(_resizedSize))
@@ -162,7 +163,7 @@ namespace XamarinFormsCameraPreview.Droid.Renderers
                         // canny edge detection
                         CvInvoke.Canny(gaussian, canny, 15, 40);
 
-                        var rotated = canny.Rotate(CameraHelper.GetRotationAngle(Context), new Gray(255), false);
+                        var rotated = canny.Rotate(CameraHelper.GetRotationAngle(_deviceOrientation), new Gray(255), false);
 
                         // test stuff
                         var element = CvInvoke.GetStructuringElement(ElementShape.Rectangle, new Size(5, 5), new Point(1, 1));
@@ -237,8 +238,13 @@ namespace XamarinFormsCameraPreview.Droid.Renderers
                                 
                             }
 
-                            _overlay.SetImageBitmap(bgrContour.Bitmap);
+                            using (var bitmap = bgrContour.Bitmap)
+                            {
+                                _overlay.SetImageBitmap(bitmap);
+                            }
                         }
+
+                        rotated.Dispose();
                     }
 
                     handle.Free();
@@ -250,7 +256,7 @@ namespace XamarinFormsCameraPreview.Droid.Renderers
                     _busy = false;
                 }
             }
-            camera.AddCallbackBuffer(data);
+            //camera.AddCallbackBuffer(data);
         }
 
         public void SurfaceChanged(ISurfaceHolder holder, Format format, int width, int height)
@@ -266,7 +272,11 @@ namespace XamarinFormsCameraPreview.Droid.Renderers
                     // nothing to catch, we tried to stop a preview that didn't exist
                 }
 
-                CameraHelper.SetCameraParameters(Context, _camera, width, height);
+                _deviceOrientation = Context.GetSystemService(Android.Content.Context.WindowService)
+                    .JavaCast<IWindowManager>()
+                    .DefaultDisplay.Rotation;
+
+                _previewSize = CameraHelper.SetCameraParameters(_deviceOrientation, _camera, width, height);
 
                 _camera.SetPreviewDisplay(holder);
                 _camera.StartPreview();
