@@ -1,28 +1,18 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 using Xamarin.Forms;
 
 namespace XamarinFormsCameraPreview.Views
 {
 	public partial class CapturePage
 	{
-		CameraPreview preview_ = null;
-
 		public CapturePage()
 		{
 			InitializeComponent();
 
             NavigationPage.SetHasNavigationBar(this, false);
 
-            // The CameraPreview have to be created in the code behind.
             // The instance of camera preview uses platform-specified modules and it causes crash if it is defined in XAML.
-            preview_ = new CameraPreview();
-			preview_.PictureTaken += preview__PictureTaken;
-			gridCameraPreview_.Children.Add(preview_);
+            _cameraPreview.PictureTaken += preview__PictureTaken;
 		}
 
 		void preview__PictureTaken(object sender, PictureTakenEventArgs e)
@@ -42,7 +32,7 @@ namespace XamarinFormsCameraPreview.Views
 
 		void OnCaptureButtonClicked(object sender, EventArgs e)
 		{
-			preview_.TakePicture();
+			_cameraPreview.TakePicture();
 		}
 	}
 }

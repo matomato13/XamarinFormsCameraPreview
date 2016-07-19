@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2013
-VisualStudioVersion = 12.0.30723.0
+# Visual Studio 14
+VisualStudioVersion = 14.0.25123.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XamarinFormsCameraPreview", "XamarinFormsCameraPreview\XamarinFormsCameraPreview\XamarinFormsCameraPreview.csproj", "{16D83BB3-1B39-4C03-98F2-2559BDD1138E}"
 EndProject
@@ -10,13 +10,6 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XamarinFormsCameraPreview.Android", "XamarinFormsCameraPreview\XamarinFormsCameraPreview.Android\XamarinFormsCameraPreview.Android.csproj", "{1D1B34ED-70A2-4C70-8EAC-299588D91DEB}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XamarinFormsCameraPreview.WinPhone", "XamarinFormsCameraPreview\XamarinFormsCameraPreview.WinPhone\XamarinFormsCameraPreview.WinPhone.csproj", "{FE89E28A-6B08-486C-8E72-5153EFF147FE}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{DA1F07E3-3D7B-412D-BA88-4CF00D960D09}"
-	ProjectSection(SolutionItems) = preProject
-		.nuget\NuGet.Config = .nuget\NuGet.Config
-		.nuget\NuGet.exe = .nuget\NuGet.exe
-		.nuget\NuGet.targets = .nuget\NuGet.targets
-	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -38,6 +31,12 @@ Global
 		Debug|iPhoneSimulator = Debug|iPhoneSimulator
 		Debug|Mixed Platforms = Debug|Mixed Platforms
 		Debug|x86 = Debug|x86
+		Droid|Any CPU = Droid|Any CPU
+		Droid|ARM = Droid|ARM
+		Droid|iPhone = Droid|iPhone
+		Droid|iPhoneSimulator = Droid|iPhoneSimulator
+		Droid|Mixed Platforms = Droid|Mixed Platforms
+		Droid|x86 = Droid|x86
 		Release|Any CPU = Release|Any CPU
 		Release|ARM = Release|ARM
 		Release|iPhone = Release|iPhone
@@ -70,6 +69,18 @@ Global
 		{16D83BB3-1B39-4C03-98F2-2559BDD1138E}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
 		{16D83BB3-1B39-4C03-98F2-2559BDD1138E}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
 		{16D83BB3-1B39-4C03-98F2-2559BDD1138E}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{16D83BB3-1B39-4C03-98F2-2559BDD1138E}.Droid|Any CPU.ActiveCfg = Debug|Any CPU
+		{16D83BB3-1B39-4C03-98F2-2559BDD1138E}.Droid|Any CPU.Build.0 = Debug|Any CPU
+		{16D83BB3-1B39-4C03-98F2-2559BDD1138E}.Droid|ARM.ActiveCfg = Debug|Any CPU
+		{16D83BB3-1B39-4C03-98F2-2559BDD1138E}.Droid|ARM.Build.0 = Debug|Any CPU
+		{16D83BB3-1B39-4C03-98F2-2559BDD1138E}.Droid|iPhone.ActiveCfg = Debug|Any CPU
+		{16D83BB3-1B39-4C03-98F2-2559BDD1138E}.Droid|iPhone.Build.0 = Debug|Any CPU
+		{16D83BB3-1B39-4C03-98F2-2559BDD1138E}.Droid|iPhoneSimulator.ActiveCfg = Debug|Any CPU
+		{16D83BB3-1B39-4C03-98F2-2559BDD1138E}.Droid|iPhoneSimulator.Build.0 = Debug|Any CPU
+		{16D83BB3-1B39-4C03-98F2-2559BDD1138E}.Droid|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{16D83BB3-1B39-4C03-98F2-2559BDD1138E}.Droid|Mixed Platforms.Build.0 = Debug|Any CPU
+		{16D83BB3-1B39-4C03-98F2-2559BDD1138E}.Droid|x86.ActiveCfg = Debug|Any CPU
+		{16D83BB3-1B39-4C03-98F2-2559BDD1138E}.Droid|x86.Build.0 = Debug|Any CPU
 		{16D83BB3-1B39-4C03-98F2-2559BDD1138E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{16D83BB3-1B39-4C03-98F2-2559BDD1138E}.Release|Any CPU.Build.0 = Release|Any CPU
 		{16D83BB3-1B39-4C03-98F2-2559BDD1138E}.Release|ARM.ActiveCfg = Release|Any CPU
@@ -105,6 +116,18 @@ Global
 		{DA47270A-EEEE-48F4-9BFD-DA315F43ED98}.Debug|Mixed Platforms.ActiveCfg = Debug|iPhone
 		{DA47270A-EEEE-48F4-9BFD-DA315F43ED98}.Debug|Mixed Platforms.Build.0 = Debug|iPhone
 		{DA47270A-EEEE-48F4-9BFD-DA315F43ED98}.Debug|x86.ActiveCfg = Debug|iPhone
+		{DA47270A-EEEE-48F4-9BFD-DA315F43ED98}.Droid|Any CPU.ActiveCfg = Release|iPhoneSimulator
+		{DA47270A-EEEE-48F4-9BFD-DA315F43ED98}.Droid|Any CPU.Build.0 = Release|iPhoneSimulator
+		{DA47270A-EEEE-48F4-9BFD-DA315F43ED98}.Droid|ARM.ActiveCfg = Release|iPhoneSimulator
+		{DA47270A-EEEE-48F4-9BFD-DA315F43ED98}.Droid|ARM.Build.0 = Release|iPhoneSimulator
+		{DA47270A-EEEE-48F4-9BFD-DA315F43ED98}.Droid|iPhone.ActiveCfg = Debug|iPhone
+		{DA47270A-EEEE-48F4-9BFD-DA315F43ED98}.Droid|iPhone.Build.0 = Debug|iPhone
+		{DA47270A-EEEE-48F4-9BFD-DA315F43ED98}.Droid|iPhoneSimulator.ActiveCfg = Debug|iPhoneSimulator
+		{DA47270A-EEEE-48F4-9BFD-DA315F43ED98}.Droid|iPhoneSimulator.Build.0 = Debug|iPhoneSimulator
+		{DA47270A-EEEE-48F4-9BFD-DA315F43ED98}.Droid|Mixed Platforms.ActiveCfg = Debug|iPhoneSimulator
+		{DA47270A-EEEE-48F4-9BFD-DA315F43ED98}.Droid|Mixed Platforms.Build.0 = Debug|iPhoneSimulator
+		{DA47270A-EEEE-48F4-9BFD-DA315F43ED98}.Droid|x86.ActiveCfg = Release|iPhoneSimulator
+		{DA47270A-EEEE-48F4-9BFD-DA315F43ED98}.Droid|x86.Build.0 = Release|iPhoneSimulator
 		{DA47270A-EEEE-48F4-9BFD-DA315F43ED98}.Release|Any CPU.ActiveCfg = Release|iPhone
 		{DA47270A-EEEE-48F4-9BFD-DA315F43ED98}.Release|ARM.ActiveCfg = Release|iPhone
 		{DA47270A-EEEE-48F4-9BFD-DA315F43ED98}.Release|iPhone.ActiveCfg = Release|iPhone
@@ -144,6 +167,24 @@ Global
 		{1D1B34ED-70A2-4C70-8EAC-299588D91DEB}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
 		{1D1B34ED-70A2-4C70-8EAC-299588D91DEB}.Debug|Mixed Platforms.Deploy.0 = Debug|Any CPU
 		{1D1B34ED-70A2-4C70-8EAC-299588D91DEB}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{1D1B34ED-70A2-4C70-8EAC-299588D91DEB}.Droid|Any CPU.ActiveCfg = Debug|Any CPU
+		{1D1B34ED-70A2-4C70-8EAC-299588D91DEB}.Droid|Any CPU.Build.0 = Debug|Any CPU
+		{1D1B34ED-70A2-4C70-8EAC-299588D91DEB}.Droid|Any CPU.Deploy.0 = Debug|Any CPU
+		{1D1B34ED-70A2-4C70-8EAC-299588D91DEB}.Droid|ARM.ActiveCfg = Debug|Any CPU
+		{1D1B34ED-70A2-4C70-8EAC-299588D91DEB}.Droid|ARM.Build.0 = Debug|Any CPU
+		{1D1B34ED-70A2-4C70-8EAC-299588D91DEB}.Droid|ARM.Deploy.0 = Debug|Any CPU
+		{1D1B34ED-70A2-4C70-8EAC-299588D91DEB}.Droid|iPhone.ActiveCfg = Debug|Any CPU
+		{1D1B34ED-70A2-4C70-8EAC-299588D91DEB}.Droid|iPhone.Build.0 = Debug|Any CPU
+		{1D1B34ED-70A2-4C70-8EAC-299588D91DEB}.Droid|iPhone.Deploy.0 = Debug|Any CPU
+		{1D1B34ED-70A2-4C70-8EAC-299588D91DEB}.Droid|iPhoneSimulator.ActiveCfg = Debug|Any CPU
+		{1D1B34ED-70A2-4C70-8EAC-299588D91DEB}.Droid|iPhoneSimulator.Build.0 = Debug|Any CPU
+		{1D1B34ED-70A2-4C70-8EAC-299588D91DEB}.Droid|iPhoneSimulator.Deploy.0 = Debug|Any CPU
+		{1D1B34ED-70A2-4C70-8EAC-299588D91DEB}.Droid|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{1D1B34ED-70A2-4C70-8EAC-299588D91DEB}.Droid|Mixed Platforms.Build.0 = Debug|Any CPU
+		{1D1B34ED-70A2-4C70-8EAC-299588D91DEB}.Droid|Mixed Platforms.Deploy.0 = Debug|Any CPU
+		{1D1B34ED-70A2-4C70-8EAC-299588D91DEB}.Droid|x86.ActiveCfg = Debug|Any CPU
+		{1D1B34ED-70A2-4C70-8EAC-299588D91DEB}.Droid|x86.Build.0 = Debug|Any CPU
+		{1D1B34ED-70A2-4C70-8EAC-299588D91DEB}.Droid|x86.Deploy.0 = Debug|Any CPU
 		{1D1B34ED-70A2-4C70-8EAC-299588D91DEB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1D1B34ED-70A2-4C70-8EAC-299588D91DEB}.Release|Any CPU.Build.0 = Release|Any CPU
 		{1D1B34ED-70A2-4C70-8EAC-299588D91DEB}.Release|Any CPU.Deploy.0 = Release|Any CPU
@@ -196,6 +237,24 @@ Global
 		{FE89E28A-6B08-486C-8E72-5153EFF147FE}.Debug|x86.ActiveCfg = Debug|x86
 		{FE89E28A-6B08-486C-8E72-5153EFF147FE}.Debug|x86.Build.0 = Debug|x86
 		{FE89E28A-6B08-486C-8E72-5153EFF147FE}.Debug|x86.Deploy.0 = Debug|x86
+		{FE89E28A-6B08-486C-8E72-5153EFF147FE}.Droid|Any CPU.ActiveCfg = Debug|Any CPU
+		{FE89E28A-6B08-486C-8E72-5153EFF147FE}.Droid|Any CPU.Build.0 = Debug|Any CPU
+		{FE89E28A-6B08-486C-8E72-5153EFF147FE}.Droid|Any CPU.Deploy.0 = Debug|Any CPU
+		{FE89E28A-6B08-486C-8E72-5153EFF147FE}.Droid|ARM.ActiveCfg = Debug|ARM
+		{FE89E28A-6B08-486C-8E72-5153EFF147FE}.Droid|ARM.Build.0 = Debug|ARM
+		{FE89E28A-6B08-486C-8E72-5153EFF147FE}.Droid|ARM.Deploy.0 = Debug|ARM
+		{FE89E28A-6B08-486C-8E72-5153EFF147FE}.Droid|iPhone.ActiveCfg = Debug|Any CPU
+		{FE89E28A-6B08-486C-8E72-5153EFF147FE}.Droid|iPhone.Build.0 = Debug|Any CPU
+		{FE89E28A-6B08-486C-8E72-5153EFF147FE}.Droid|iPhone.Deploy.0 = Debug|Any CPU
+		{FE89E28A-6B08-486C-8E72-5153EFF147FE}.Droid|iPhoneSimulator.ActiveCfg = Debug|Any CPU
+		{FE89E28A-6B08-486C-8E72-5153EFF147FE}.Droid|iPhoneSimulator.Build.0 = Debug|Any CPU
+		{FE89E28A-6B08-486C-8E72-5153EFF147FE}.Droid|iPhoneSimulator.Deploy.0 = Debug|Any CPU
+		{FE89E28A-6B08-486C-8E72-5153EFF147FE}.Droid|Mixed Platforms.ActiveCfg = Debug|x86
+		{FE89E28A-6B08-486C-8E72-5153EFF147FE}.Droid|Mixed Platforms.Build.0 = Debug|x86
+		{FE89E28A-6B08-486C-8E72-5153EFF147FE}.Droid|Mixed Platforms.Deploy.0 = Debug|x86
+		{FE89E28A-6B08-486C-8E72-5153EFF147FE}.Droid|x86.ActiveCfg = Debug|x86
+		{FE89E28A-6B08-486C-8E72-5153EFF147FE}.Droid|x86.Build.0 = Debug|x86
+		{FE89E28A-6B08-486C-8E72-5153EFF147FE}.Droid|x86.Deploy.0 = Debug|x86
 		{FE89E28A-6B08-486C-8E72-5153EFF147FE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FE89E28A-6B08-486C-8E72-5153EFF147FE}.Release|Any CPU.Build.0 = Release|Any CPU
 		{FE89E28A-6B08-486C-8E72-5153EFF147FE}.Release|Any CPU.Deploy.0 = Release|Any CPU

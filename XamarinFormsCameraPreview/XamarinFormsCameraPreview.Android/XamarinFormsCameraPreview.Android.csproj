@@ -52,6 +52,9 @@
     <AndroidLinkMode>SdkOnly</AndroidLinkMode>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Emgu.CV.World.Android">
+      <HintPath>..\..\..\..\..\Users\mathieu.masciotra\Desktop\emgucv-android-31-commercial\Emgu.CV.World\bin\Release\Emgu.CV.World.Android.dll</HintPath>
+    </Reference>
     <Reference Include="FormsViewGroup, Version=2.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\..\packages\Xamarin.Forms.2.3.0.107\lib\MonoAndroid10\FormsViewGroup.dll</HintPath>
       <Private>True</Private>
