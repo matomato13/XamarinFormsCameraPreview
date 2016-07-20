@@ -11,7 +11,7 @@ namespace XamarinFormsCameraPreview.Droid.Renderers
 {
     public static class CameraHelper
     {
-        public static int GetRotationAngle(SurfaceOrientation orientation)
+        public static int GetRotationAngle(SurfaceOrientation orientation, Camera.CameraInfo cameraInfo)
         {
             var degrees = 0;
             switch (orientation)
@@ -29,10 +29,10 @@ namespace XamarinFormsCameraPreview.Droid.Renderers
                     break;
             }
 
-            return (GetCameraInfo().Orientation - degrees + 360) % 360;
+            return (cameraInfo.Orientation - degrees + 360) % 360;
         }
 
-        public static Size SetCameraParameters(SurfaceOrientation deviceOrientation, Camera camera, int width, int height, IList<FastJavaByteArray> buffers)
+        public static Size SetCameraParameters(SurfaceOrientation deviceOrientation, Camera.CameraInfo cameraInfo, Camera camera, int width, int height, IList<FastJavaByteArray> buffers)
         {
             var parameters = camera.GetParameters();
 
@@ -44,7 +44,7 @@ namespace XamarinFormsCameraPreview.Droid.Renderers
             else
                 parameters.FocusMode = Camera.Parameters.FocusModeAuto;
 
-            var rotationAngle = GetRotationAngle(deviceOrientation);
+            var rotationAngle = GetRotationAngle(deviceOrientation, cameraInfo);
             var isPortrait = rotationAngle == 90 || rotationAngle == 270;
 
             var previewSize = GetOptimalPreviewSize(parameters.SupportedPreviewSizes, isPortrait ? height : width, isPortrait ? width : height);
@@ -81,7 +81,7 @@ namespace XamarinFormsCameraPreview.Droid.Renderers
             return parameters.PreviewSize.Width * parameters.PreviewSize.Height * ImageFormat.GetBitsPerPixel(parameters.PreviewFormat) / 8;
         }
 
-        private static Camera.CameraInfo GetCameraInfo()
+        public static Camera.CameraInfo GetCameraInfo()
         {
             // Find the total number of cameras available
             var numberOfCameras = Camera.NumberOfCameras;

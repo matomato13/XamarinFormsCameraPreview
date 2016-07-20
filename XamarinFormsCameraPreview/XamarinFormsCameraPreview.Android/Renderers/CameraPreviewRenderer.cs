@@ -35,6 +35,7 @@ namespace XamarinFormsCameraPreview.Droid.Renderers
         private Size _resizedSize;
         private Size _previewSize;
         private SurfaceOrientation _deviceOrientation;
+        private Camera.CameraInfo _cameraInfo;
         private FastJavaByteArray _buffer;
         private IList<FastJavaByteArray> _buffers = new List<FastJavaByteArray>();
 
@@ -94,7 +95,7 @@ namespace XamarinFormsCameraPreview.Droid.Renderers
                             {
                                 CvInvoke.CvtColor(yuv420sp, bgr, ColorConversion.Yuv420Sp2Bgr);
 
-                                var image = bgr.Rotate(CameraHelper.GetRotationAngle(_deviceOrientation), new Bgr(255, 255, 255), false);
+                                var image = bgr.Rotate(CameraHelper.GetRotationAngle(_deviceOrientation, _cameraInfo), new Bgr(255, 255, 255), false);
                                 var rotatedSize = image.Size.Width > image.Size.Height
                                     ? _resizedSize
                                     : new Size(_resizedSize.Height, _resizedSize.Width);
@@ -177,7 +178,7 @@ namespace XamarinFormsCameraPreview.Droid.Renderers
                         // canny edge detection
                         CvInvoke.Canny(gaussian, canny, 15, 40);
 
-                        var rotated = canny.Rotate(CameraHelper.GetRotationAngle(_deviceOrientation), new Gray(255), false);
+                        var rotated = canny.Rotate(CameraHelper.GetRotationAngle(_deviceOrientation, _cameraInfo), new Gray(255), false);
 
                         // test stuff
                         var element = CvInvoke.GetStructuringElement(ElementShape.Rectangle, new Size(5, 5), new Point(1, 1));
@@ -252,10 +253,10 @@ namespace XamarinFormsCameraPreview.Droid.Renderers
                                 
                             }
 
-                            using (var bmp = bgrContour.ToBitmap())
-                            {
-                                _overlay.SetImageBitmap(bmp);
-                            }
+                            //using (var bmp = bgrContour.ToBitmap())
+                            //{
+                            //    _overlay.SetImageBitmap(bmp);
+                            //}
                         }
 
                         rotated.Dispose();
@@ -290,7 +291,9 @@ namespace XamarinFormsCameraPreview.Droid.Renderers
                     .JavaCast<IWindowManager>()
                     .DefaultDisplay.Rotation;
 
-                _previewSize = CameraHelper.SetCameraParameters(_deviceOrientation, _camera, width, height, _buffers);
+                _cameraInfo = CameraHelper.GetCameraInfo();
+
+                _previewSize = CameraHelper.SetCameraParameters(_deviceOrientation, _cameraInfo, _camera, width, height, _buffers);
 
                 _camera.SetPreviewDisplay(holder);
                 _camera.StartPreview();
