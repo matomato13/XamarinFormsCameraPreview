@@ -3,8 +3,11 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
+using Android.Content;
 using Android.Graphics;
 using Android.Runtime;
+using Android.Util;
 using Android.Views;
 using Android.Widget;
 using ApxLabs.FastAndroidCamera;
@@ -18,6 +21,7 @@ using XamarinFormsCameraPreview.Views;
 using Camera = Android.Hardware.Camera;
 using Point = System.Drawing.Point;
 using Size = System.Drawing.Size;
+using View = Android.Views.View;
 
 [assembly: ExportRenderer(typeof(CameraPreview), typeof(XamarinFormsCameraPreview.Droid.Renderers.CameraPreviewRenderer))]
 
@@ -250,13 +254,11 @@ namespace XamarinFormsCameraPreview.Droid.Renderers
                             {
                                 CvInvoke.DrawContours(bgrContour, new VectorOfVectorOfPoint(biggestContour.ApproxContour), -1, new MCvScalar(0, 255, 0), 3); //green
                                 _lastContourDetected = biggestContour.ApproxContour.ToArray();
-                                
                             }
 
-                            //using (var bmp = bgrContour.ToBitmap())
-                            //{
-                            //    _overlay.SetImageBitmap(bmp);
-                            //}
+                            _bitmap?.Recycle();
+                            _bitmap = bgrContour.ToBitmap();
+                            _overlay.SetImageBitmap(_bitmap);
                         }
 
                         rotated.Dispose();
@@ -268,11 +270,19 @@ namespace XamarinFormsCameraPreview.Droid.Renderers
                 }
                 finally
                 {
+                    if (_bitmap != null)
+                    {
+                        _bitmap.Dispose();
+                        _bitmap = null;
+                    }
+                    
                     _busy = false;
                 }
             }
             camera.AddCallbackBuffer(_buffer);
         }
+
+        private Bitmap _bitmap;
 
         public void SurfaceChanged(ISurfaceHolder holder, Format format, int width, int height)
         {
@@ -287,7 +297,7 @@ namespace XamarinFormsCameraPreview.Droid.Renderers
                     // nothing to catch, we tried to stop a preview that didn't exist
                 }
 
-                _deviceOrientation = Context.GetSystemService(Android.Content.Context.WindowService)
+                _deviceOrientation = Context.GetSystemService(Context.WindowService)
                     .JavaCast<IWindowManager>()
                     .DefaultDisplay.Rotation;
 
