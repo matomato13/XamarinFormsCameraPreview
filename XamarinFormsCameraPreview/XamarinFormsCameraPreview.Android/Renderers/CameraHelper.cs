@@ -32,7 +32,7 @@ namespace XamarinFormsCameraPreview.Droid.Renderers
             return (cameraInfo.Orientation - degrees + 360) % 360;
         }
 
-        public static Size SetCameraParameters(SurfaceOrientation deviceOrientation, Camera.CameraInfo cameraInfo, Camera camera, int width, int height, IList<FastJavaByteArray> buffers)
+        public static Size SetCameraParameters(SurfaceOrientation deviceOrientation, Camera.CameraInfo cameraInfo, Camera camera, int width, int height, IList<FastJavaByteArray> buffers, Size previewSize)
         {
             var parameters = camera.GetParameters();
 
@@ -47,11 +47,16 @@ namespace XamarinFormsCameraPreview.Droid.Renderers
             var rotationAngle = GetRotationAngle(deviceOrientation, cameraInfo);
             var isPortrait = rotationAngle == 90 || rotationAngle == 270;
 
-            var previewSize = GetOptimalPreviewSize(parameters.SupportedPreviewSizes, isPortrait ? height : width, isPortrait ? width : height);
+            if (previewSize.Width == 0 || previewSize.Height == 0)
+            {
+                var optimalPreviewSize = GetOptimalPreviewSize(parameters.SupportedPreviewSizes, isPortrait ? height : width, isPortrait ? width : height);
 
-            parameters.SetPreviewSize(previewSize.Width, previewSize.Height);
-            parameters.SetPictureSize(previewSize.Width, previewSize.Height);
+                parameters.SetPreviewSize(optimalPreviewSize.Width, optimalPreviewSize.Height);
+                parameters.SetPictureSize(optimalPreviewSize.Width, optimalPreviewSize.Height);
 
+                previewSize = new Size(optimalPreviewSize.Width, optimalPreviewSize.Height);
+            }
+            
             // Rotate preview and final picture
             camera.SetDisplayOrientation(rotationAngle);
             parameters.SetRotation(rotationAngle);
@@ -73,7 +78,7 @@ namespace XamarinFormsCameraPreview.Droid.Renderers
 
             camera.SetParameters(parameters);
 
-            return new Size(previewSize.Width, previewSize.Height);
+            return previewSize;
         }
 
         private static int CalculateBufferSize(Camera.Parameters parameters)

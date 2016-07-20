@@ -145,6 +145,7 @@ namespace XamarinFormsCameraPreview.Droid.Renderers
         public void OnPreviewFrame(IntPtr data, Camera camera)
 	    {
             var debug = false;
+	        var previewResizeRatio = 2;
 
             if (!_busy)
             {
@@ -158,6 +159,15 @@ namespace XamarinFormsCameraPreview.Droid.Renderers
                         _buffer = null;
                     }
 
+                    if (data == IntPtr.Zero)
+                    {
+                        // no data, nothing to do
+                        _bitmap?.Recycle();
+                        _overlay.SetImageBitmap(null);
+
+                        return;
+                    }
+
                     _buffer = new FastJavaByteArray(data);
 
                     // keep it for later if needed
@@ -165,7 +175,7 @@ namespace XamarinFormsCameraPreview.Droid.Renderers
                     _buffer.CopyTo(bytes, 0);
                     _lastPreviewFrame = (byte[])bytes.Clone();
 
-                    _resizedSize = new Size((int)(_previewSize.Width / 1.5), (int)(_previewSize.Height / 1.5));
+                    _resizedSize = new Size(_previewSize.Width / previewResizeRatio, _previewSize.Height / previewResizeRatio);
 
                     var handle = GCHandle.Alloc(bytes, GCHandleType.Pinned);
                     using (var grey = new Image<Gray, byte>(_previewSize.Width, _previewSize.Height, _previewSize.Width, handle.AddrOfPinnedObject()))
@@ -303,7 +313,7 @@ namespace XamarinFormsCameraPreview.Droid.Renderers
 
                 _cameraInfo = CameraHelper.GetCameraInfo();
 
-                _previewSize = CameraHelper.SetCameraParameters(_deviceOrientation, _cameraInfo, _camera, width, height, _buffers);
+                _previewSize = CameraHelper.SetCameraParameters(_deviceOrientation, _cameraInfo, _camera, width, height, _buffers, _previewSize);
 
                 _camera.SetPreviewDisplay(holder);
                 _camera.StartPreview();
@@ -344,17 +354,22 @@ namespace XamarinFormsCameraPreview.Droid.Renderers
         {
             if (disposing)
             {
-                foreach (var buffer in _buffers)
-                {
-                    buffer?.Dispose();
-                }
-
-                _buffers = new List<FastJavaByteArray>();
-
-                _buffer?.Dispose();
+                ClearBuffers();
             }
 
             base.Dispose(disposing);
+        }
+
+        private void ClearBuffers()
+        {
+            foreach (var buffer in _buffers)
+            {
+                buffer?.Dispose();
+            }
+
+            _buffers = new List<FastJavaByteArray>();
+
+            _buffer?.Dispose();
         }
 
         private void SaveImage(Bitmap bitmap, string name)
