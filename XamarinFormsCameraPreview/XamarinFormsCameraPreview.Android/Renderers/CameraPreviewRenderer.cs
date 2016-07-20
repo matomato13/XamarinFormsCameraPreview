@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -6,6 +7,7 @@ using Android.Graphics;
 using Android.Runtime;
 using Android.Views;
 using Android.Widget;
+using ApxLabs.FastAndroidCamera;
 using Emgu.CV;
 using Emgu.CV.CvEnum;
 using Emgu.CV.Structure;
@@ -21,8 +23,8 @@ using Size = System.Drawing.Size;
 
 namespace XamarinFormsCameraPreview.Droid.Renderers
 {
-    public class CameraPreviewRenderer : ViewRenderer<CameraPreview, FrameLayout>, ISurfaceHolderCallback, Camera.IPreviewCallback
-	{
+    public class CameraPreviewRenderer : ViewRenderer<CameraPreview, FrameLayout>, ISurfaceHolderCallback, INonMarshalingPreviewCallback
+    {
 		private Camera _camera;
 	    private FrameLayout _frameLayout;
 
@@ -33,6 +35,8 @@ namespace XamarinFormsCameraPreview.Droid.Renderers
         private Size _resizedSize;
         private Size _previewSize;
         private SurfaceOrientation _deviceOrientation;
+        private FastJavaByteArray _buffer;
+        private IList<FastJavaByteArray> _buffers = new List<FastJavaByteArray>();
 
         protected override void OnElementChanged(ElementChangedEventArgs<CameraPreview> e)
 		{
@@ -133,7 +137,7 @@ namespace XamarinFormsCameraPreview.Droid.Renderers
             SaveImage(image.Bitmap, "result.png");
         }
         
-        public void OnPreviewFrame(byte[] data, Camera camera)
+        public void OnPreviewFrame(IntPtr data, Camera camera)
 	    {
             var debug = false;
 
@@ -143,12 +147,22 @@ namespace XamarinFormsCameraPreview.Droid.Renderers
                 {
                     _busy = true;
 
+                    if (_buffer != null)
+                    {
+                        _buffer?.Dispose();
+                        _buffer = null;
+                    }
+
+                    _buffer = new FastJavaByteArray(data);
+
                     // keep it for later if needed
-                    _lastPreviewFrame = (byte[])data.Clone();
+                    var bytes = new byte[_buffer.Count];
+                    _buffer.CopyTo(bytes, 0);
+                    _lastPreviewFrame = (byte[])bytes.Clone();
 
                     _resizedSize = new Size((int)(_previewSize.Width / 1.5), (int)(_previewSize.Height / 1.5));
 
-                    var handle = GCHandle.Alloc(data, GCHandleType.Pinned);
+                    var handle = GCHandle.Alloc(bytes, GCHandleType.Pinned);
                     using (var grey = new Image<Gray, byte>(_previewSize.Width, _previewSize.Height, _previewSize.Width, handle.AddrOfPinnedObject()))
                     using (var resized = new Image<Gray, byte>(_resizedSize))
                     using (var gaussian = new Image<Gray, byte>(_resizedSize))
@@ -238,9 +252,9 @@ namespace XamarinFormsCameraPreview.Droid.Renderers
                                 
                             }
 
-                            using (var bitmap = bgrContour.Bitmap)
+                            using (var bmp = bgrContour.ToBitmap())
                             {
-                                _overlay.SetImageBitmap(bitmap);
+                                _overlay.SetImageBitmap(bmp);
                             }
                         }
 
@@ -256,7 +270,7 @@ namespace XamarinFormsCameraPreview.Droid.Renderers
                     _busy = false;
                 }
             }
-            //camera.AddCallbackBuffer(data);
+            camera.AddCallbackBuffer(_buffer);
         }
 
         public void SurfaceChanged(ISurfaceHolder holder, Format format, int width, int height)
@@ -276,7 +290,7 @@ namespace XamarinFormsCameraPreview.Droid.Renderers
                     .JavaCast<IWindowManager>()
                     .DefaultDisplay.Rotation;
 
-                _previewSize = CameraHelper.SetCameraParameters(_deviceOrientation, _camera, width, height);
+                _previewSize = CameraHelper.SetCameraParameters(_deviceOrientation, _camera, width, height, _buffers);
 
                 _camera.SetPreviewDisplay(holder);
                 _camera.StartPreview();
@@ -296,7 +310,7 @@ namespace XamarinFormsCameraPreview.Droid.Renderers
 
             if (_camera != null)
             {
-                _camera.SetPreviewCallback(this); // TODO vs SetPreviewCallbackWithBuffer?
+                _camera.SetNonMarshalingPreviewCallback(this);
                 _camera.SetPreviewDisplay(holder);
             }
         }
@@ -305,12 +319,29 @@ namespace XamarinFormsCameraPreview.Droid.Renderers
         {
             if (_camera != null)
             {
-                _camera.SetPreviewCallback(null);
+                _camera.SetNonMarshalingPreviewCallback(null);
                 _camera.StopPreview();
                 _camera.Release();
                 _camera.Dispose();
                 _camera = null;
             }
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                foreach (var buffer in _buffers)
+                {
+                    buffer?.Dispose();
+                }
+
+                _buffers = new List<FastJavaByteArray>();
+
+                _buffer?.Dispose();
+            }
+
+            base.Dispose(disposing);
         }
 
         private void SaveImage(Bitmap bitmap, string name)

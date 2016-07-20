@@ -1,8 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using Android.Graphics;
 using Android.Hardware;
 using Android.Views;
+using ApxLabs.FastAndroidCamera;
+using Camera = Android.Hardware.Camera;
 
 namespace XamarinFormsCameraPreview.Droid.Renderers
 {
@@ -29,7 +32,7 @@ namespace XamarinFormsCameraPreview.Droid.Renderers
             return (GetCameraInfo().Orientation - degrees + 360) % 360;
         }
 
-        public static Size SetCameraParameters(SurfaceOrientation deviceOrientation, Camera camera, int width, int height)
+        public static Size SetCameraParameters(SurfaceOrientation deviceOrientation, Camera camera, int width, int height, IList<FastJavaByteArray> buffers)
         {
             var parameters = camera.GetParameters();
 
@@ -53,9 +56,29 @@ namespace XamarinFormsCameraPreview.Droid.Renderers
             camera.SetDisplayOrientation(rotationAngle);
             parameters.SetRotation(rotationAngle);
 
+            if (buffers.Count == 0)
+            {
+                var buffersize = CalculateBufferSize(parameters);
+
+                for (var i = 0; i <= 3; i++)
+                {
+                    buffers.Add(new FastJavaByteArray(buffersize));
+                }
+            }
+
+            foreach (var buffer in buffers)
+            {
+                camera.AddCallbackBuffer(buffer);
+            }
+
             camera.SetParameters(parameters);
 
             return new Size(previewSize.Width, previewSize.Height);
+        }
+
+        private static int CalculateBufferSize(Camera.Parameters parameters)
+        {
+            return parameters.PreviewSize.Width * parameters.PreviewSize.Height * ImageFormat.GetBitsPerPixel(parameters.PreviewFormat) / 8;
         }
 
         private static Camera.CameraInfo GetCameraInfo()

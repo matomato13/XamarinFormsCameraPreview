@@ -136,6 +136,10 @@
     <Content Include="Properties\AndroidManifest.xml" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\..\FastAndroidCamera\FastAndroidCamera.csproj">
+      <Project>{b544c08c-7f75-4b68-91f5-3b0afe17937b}</Project>
+      <Name>FastAndroidCamera</Name>
+    </ProjectReference>
     <ProjectReference Include="..\XamarinFormsCameraPreview\XamarinFormsCameraPreview.csproj">
       <Name>XamarinFormsCameraPreview</Name>
     </ProjectReference>
