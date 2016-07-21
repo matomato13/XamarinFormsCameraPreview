@@ -3,11 +3,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
-using System.Threading.Tasks;
 using Android.Content;
 using Android.Graphics;
 using Android.Runtime;
-using Android.Util;
 using Android.Views;
 using Android.Widget;
 using ApxLabs.FastAndroidCamera;
@@ -21,7 +19,6 @@ using XamarinFormsCameraPreview.Views;
 using Camera = Android.Hardware.Camera;
 using Point = System.Drawing.Point;
 using Size = System.Drawing.Size;
-using View = Android.Views.View;
 
 [assembly: ExportRenderer(typeof(CameraPreview), typeof(XamarinFormsCameraPreview.Droid.Renderers.CameraPreviewRenderer))]
 
@@ -42,6 +39,7 @@ namespace XamarinFormsCameraPreview.Droid.Renderers
         private Camera.CameraInfo _cameraInfo;
         private FastJavaByteArray _buffer;
         private IList<FastJavaByteArray> _buffers = new List<FastJavaByteArray>();
+        private const double TargetPixelArea = 853*512; // the image processing works best with this resolution, we resize the image to have something similar
 
         protected override void OnElementChanged(ElementChangedEventArgs<CameraPreview> e)
 		{
@@ -141,11 +139,23 @@ namespace XamarinFormsCameraPreview.Droid.Renderers
         {
             SaveImage(image.Bitmap, "result.png");
         }
-        
+
+        private double _resizeRatio;
+        private double GetResizeRatio()
+        {
+            if (_resizeRatio > 0)
+            {
+                return _resizeRatio;
+            }
+
+            double previewPixelRatio = _previewSize.Width * _previewSize.Height;
+            return Math.Round(Math.Sqrt(previewPixelRatio / TargetPixelArea), 3);
+        }
+
         public void OnPreviewFrame(IntPtr data, Camera camera)
 	    {
             var debug = false;
-	        var previewResizeRatio = 2;
+	        var previewResizeRatio = GetResizeRatio();
 
             if (!_busy)
             {
@@ -175,7 +185,7 @@ namespace XamarinFormsCameraPreview.Droid.Renderers
                     _buffer.CopyTo(bytes, 0);
                     _lastPreviewFrame = (byte[])bytes.Clone();
 
-                    _resizedSize = new Size(_previewSize.Width / previewResizeRatio, _previewSize.Height / previewResizeRatio);
+                    _resizedSize = new Size((int)(_previewSize.Width / previewResizeRatio), (int)(_previewSize.Height / previewResizeRatio));
 
                     var handle = GCHandle.Alloc(bytes, GCHandleType.Pinned);
                     using (var grey = new Image<Gray, byte>(_previewSize.Width, _previewSize.Height, _previewSize.Width, handle.AddrOfPinnedObject()))
@@ -194,7 +204,7 @@ namespace XamarinFormsCameraPreview.Droid.Renderers
 
                         var rotated = canny.Rotate(CameraHelper.GetRotationAngle(_deviceOrientation, _cameraInfo), new Gray(255), false);
 
-                        // test stuff
+                        // <test stuff>
                         var element = CvInvoke.GetStructuringElement(ElementShape.Rectangle, new Size(5, 5), new Point(1, 1));
                         CvInvoke.MorphologyEx(rotated, rotated, MorphOp.Close, element, new Point(-1, -1), 1, BorderType.Constant, CvInvoke.MorphologyDefaultBorderValue);
                         //CvInvoke.Dilate(canny, canny, null, new System.Drawing.Point(-1, -1), 3, BorderType.Constant, CvInvoke.MorphologyDefaultBorderValue);
@@ -202,7 +212,7 @@ namespace XamarinFormsCameraPreview.Droid.Renderers
                         //_overlay.SetImageBitmap(canny.Bitmap);
                         //camera.AddCallbackBuffer(data);
                         //return;
-                        //
+                        // </test stuff>
 
                         // find contours
                         var contoursDetected = new VectorOfVectorOfPoint();
@@ -275,8 +285,6 @@ namespace XamarinFormsCameraPreview.Droid.Renderers
                     }
 
                     handle.Free();
-
-                    Invalidate();
                 }
                 finally
                 {
@@ -315,7 +323,6 @@ namespace XamarinFormsCameraPreview.Droid.Renderers
 
                 _previewSize = CameraHelper.SetCameraParameters(_deviceOrientation, _cameraInfo, _camera, width, height, _buffers, _previewSize);
 
-                _camera.SetPreviewDisplay(holder);
                 _camera.StartPreview();
             }
         }

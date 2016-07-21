@@ -65,17 +65,17 @@ namespace XamarinFormsCameraPreview.Droid.Renderers
             {
                 var buffersize = CalculateBufferSize(parameters);
 
-                for (var i = 0; i <= 3; i++)
+                for (var i = 0; i <= 2; i++)
                 {
                     buffers.Add(new FastJavaByteArray(buffersize));
                 }
-            }
 
-            foreach (var buffer in buffers)
-            {
-                camera.AddCallbackBuffer(buffer);
+                foreach (var buffer in buffers)
+                {
+                    camera.AddCallbackBuffer(buffer);
+                }
             }
-
+            
             camera.SetParameters(parameters);
 
             return previewSize;
@@ -123,6 +123,7 @@ namespace XamarinFormsCameraPreview.Droid.Renderers
             // Try to find an size match aspect ratio and size
             foreach (var size in sizes)
             {
+                return size;
                 double ratio = (double)size.Width / size.Height;
 
                 if (Math.Abs(ratio - targetRatio) > ASPECT_TOLERANCE)
