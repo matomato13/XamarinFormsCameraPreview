@@ -1,12 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 using System.Windows.Input;
-using System.Windows;
-
 using Xamarin.Forms;
 
 namespace XamarinFormsCameraPreview.Views
@@ -16,7 +9,6 @@ namespace XamarinFormsCameraPreview.Views
 	/// </summary>
 	public class CameraPreview : View
 	{
-		#region PictureTakenCommandProperty
 		public static readonly BindableProperty PictureTakenCommandProperty =
 			BindableProperty.Create<CameraPreview, ICommand>(x => x.PictureTakenCommand, null);
 
@@ -35,9 +27,6 @@ namespace XamarinFormsCameraPreview.Views
 				SetValue(PictureTakenCommandProperty, value);
 			}
 		}
-		#endregion // PictureTakenCommandProperty
-
-		#region public methods
 
 		/// <summary>
 		/// Take a picture
@@ -47,12 +36,9 @@ namespace XamarinFormsCameraPreview.Views
 		/// </remarks>
 		public void TakePicture()
 		{
-			if (PictureRequired != null) {
-				PictureRequired(this, new EventArgs());
-			}
-		}
+            PictureRequired?.Invoke(this, new EventArgs());
+        }
 
-		
 		/// <summary>
 		/// Notify that the picture is taken.
 		/// In this function, PictureTaken event and PictureTakenCommand are called.
@@ -62,20 +48,14 @@ namespace XamarinFormsCameraPreview.Views
 		{
 			if (image == null) { throw new ArgumentNullException("image"); }
 
-			// call event
-			if (PictureTaken != null) {
-				PictureTaken(this, new PictureTakenEventArgs(image));
-			}
+            // call event
+            PictureTaken?.Invoke(this, new PictureTakenEventArgs(image));
 
-			// execute command
-			if (PictureTakenCommand != null && PictureTakenCommand.CanExecute(image)) {
+            // execute command
+            if (PictureTakenCommand != null && PictureTakenCommand.CanExecute(image)) {
 				PictureTakenCommand.Execute(image);
 			}
 		}
-
-		#endregion // public methods
-
-		#region events
 
 		/// <summary>
 		/// The event which is called when the TakePicture() is called
@@ -86,8 +66,6 @@ namespace XamarinFormsCameraPreview.Views
 		/// The event which is called when the picture is taken
 		/// </summary>
 		public event EventHandler<PictureTakenEventArgs> PictureTaken;
-
-		#endregion // events
 	}
 
 	/// <summary>
