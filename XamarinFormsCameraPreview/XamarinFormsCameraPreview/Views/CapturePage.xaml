@@ -11,7 +11,7 @@
 			AbsoluteLayout.LayoutFlags="All"/>
 
 		<Button
-			Text="TakePicture"
+			Text="Take Picture"
 			Clicked="OnCaptureButtonClicked"
 			HorizontalOptions="Center"
 			VerticalOptions="Center"

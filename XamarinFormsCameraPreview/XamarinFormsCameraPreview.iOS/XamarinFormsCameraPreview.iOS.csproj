@@ -118,9 +118,6 @@
     <InterfaceDefinition Include="Resources\LaunchScreen.storyboard" />
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="Emgu.CV.World.IOS">
-      <HintPath>..\..\..\..\..\Users\mathieu.masciotra\Desktop\emgucv-ios-31-commercial\bin\Emgu.CV.World.IOS.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Xml" />
     <Reference Include="System.Core" />
@@ -141,6 +138,9 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="Xamarin.iOS" />
+    <Reference Include="Emgu.CV.World.IOS">
+      <HintPath>..\..\..\EmguCV\Emgu.CV.World.IOS.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\XamarinFormsCameraPreview\XamarinFormsCameraPreview.csproj">

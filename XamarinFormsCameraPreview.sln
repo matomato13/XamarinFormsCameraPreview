@@ -331,6 +331,7 @@ Global
 		{25D1D204-9ACC-4043-8D33-4D1A4DB1680B}.Release|Mixed Platforms.ActiveCfg = Release|iPhone
 		{25D1D204-9ACC-4043-8D33-4D1A4DB1680B}.Release|Mixed Platforms.Build.0 = Release|iPhone
 		{25D1D204-9ACC-4043-8D33-4D1A4DB1680B}.Release|x86.ActiveCfg = Release|iPhone
+		{25D1D204-9ACC-4043-8D33-4D1A4DB1680B}.Debug|Any CPU.Build.0 = Debug|iPhone
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

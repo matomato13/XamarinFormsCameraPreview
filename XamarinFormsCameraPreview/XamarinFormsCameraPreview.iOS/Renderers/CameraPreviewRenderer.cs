@@ -1,4 +1,5 @@
-﻿using Xamarin.Forms;
+﻿using System;
+using Xamarin.Forms;
 using Xamarin.Forms.Platform.iOS;
 using XamarinFormsCameraPreview.Views;
 
@@ -8,25 +9,33 @@ namespace XamarinFormsCameraPreview.iOS.Renderers
 {
     public class CameraPreviewRenderer : ViewRenderer<CameraPreview, CameraPreviewView>
     {
-        /// <summary>
-		/// Called when [element changed].
-		/// </summary>
-		/// <param name="e">The e.</param>
+        private CameraPreviewView _cameraPreviewView;
+
 		protected override void OnElementChanged(ElementChangedEventArgs<CameraPreview> e)
         {
             base.OnElementChanged(e);
 
-            if (Control == null)
+            if(e.OldElement == null)
             {
-                SetNativeControl(new CameraPreviewView());
+                // get CameraPreview object and set event handler
+                var preview = e.NewElement;
+                preview.PictureRequired += OnPictureRequired;
+
+                _cameraPreviewView = new CameraPreviewView();
+
+                SetNativeControl(_cameraPreviewView);
             }
         }
 
-        /// <summary>
-        /// Handles the <see cref="E:ElementPropertyChanged" /> event.
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The <see cref="System.ComponentModel.PropertyChangedEventArgs"/> instance containing the event data.</param>
+        private void OnPictureRequired (object sender, EventArgs e)
+        {
+            var preview = sender as CameraPreview;
+            if(preview != null)
+            {
+                _cameraPreviewView.Toggle();
+            }
+        }
+
         protected override void OnElementPropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
             base.OnElementPropertyChanged(sender, e);
