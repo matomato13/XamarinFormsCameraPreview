@@ -113,11 +113,11 @@ namespace XamarinFormsCameraPreview.Droid.Renderers
                                     // cleanup the image (if needed, this needs to be improved)
                                     CvInvoke.AdaptiveThreshold(gray, gray, 255, AdaptiveThresholdType.GaussianC, Emgu.CV.CvEnum.ThresholdType.Binary, 11, 2);
 
-                                    ProposeResultToUser(gray);
+                                    ProposeResultToUser(preview, gray);
                                 }
                                 else
                                 {
-                                    ProposeResultToUser(warped);
+                                    ProposeResultToUser(preview, warped);
                                 }
                             }
 
@@ -134,20 +134,39 @@ namespace XamarinFormsCameraPreview.Droid.Renderers
 			}
 		}
 
-        private void ProposeResultToUser<TColor>(Image<TColor, byte> image)
+        private void ProposeResultToUser<TColor>(CameraPreview preview, Image<TColor, byte> image)
             where TColor : struct, IColor
         {
-            SaveImage(image.Bitmap, "result.png");
+            var bitmap = image.Bitmap;
+            SaveImage(bitmap, "result.png");
+
+            var ms = new MemoryStream();
+            try
+            {
+                bitmap.Compress(Bitmap.CompressFormat.Png, 0, ms);
+                ms.Position = 0;
+
+                // load image source from stream
+                preview.OnPictureTaken(new Models.AndroidImage
+                {
+                    ImageSource = ImageSource.FromStream(() => ms)
+                });
+
+                // NOTE: Do not dispose memory stream if it succeeded.
+                // ImageSource is loaded in background so ms should not be disposed immediately.
+            }
+            catch
+            {
+                if (ms != null)
+                {
+                    ms.Dispose();
+                }
+                throw;
+            }
         }
 
-        private double _resizeRatio;
         private double GetResizeRatio()
         {
-            if (_resizeRatio > 0)
-            {
-                return _resizeRatio;
-            }
-
             double previewPixelRatio = _previewSize.Width * _previewSize.Height;
             return Math.Round(Math.Sqrt(previewPixelRatio / TargetPixelArea), 3);
         }
@@ -155,8 +174,7 @@ namespace XamarinFormsCameraPreview.Droid.Renderers
         public void OnPreviewFrame(IntPtr data, Camera camera)
 	    {
             var debug = false;
-	        var previewResizeRatio = GetResizeRatio();
-
+	        
             if (!_busy)
             {
                 try
@@ -184,9 +202,7 @@ namespace XamarinFormsCameraPreview.Droid.Renderers
                     var bytes = new byte[_buffer.Count];
                     _buffer.CopyTo(bytes, 0);
                     _lastPreviewFrame = (byte[])bytes.Clone();
-
-                    _resizedSize = new Size((int)(_previewSize.Width / previewResizeRatio), (int)(_previewSize.Height / previewResizeRatio));
-
+                    
                     var handle = GCHandle.Alloc(bytes, GCHandleType.Pinned);
                     using (var grey = new Image<Gray, byte>(_previewSize.Width, _previewSize.Height, _previewSize.Width, handle.AddrOfPinnedObject()))
                     using (var resized = new Image<Gray, byte>(_resizedSize))
@@ -202,17 +218,12 @@ namespace XamarinFormsCameraPreview.Droid.Renderers
                         // canny edge detection
                         CvInvoke.Canny(gaussian, canny, 15, 40);
 
+                        // rotate because the preview image is not rotated, only the surface
                         var rotated = canny.Rotate(CameraHelper.GetRotationAngle(_deviceOrientation, _cameraInfo), new Gray(255), false);
-
-                        // <test stuff>
+                        
+                        // helps closing contours
                         var element = CvInvoke.GetStructuringElement(ElementShape.Rectangle, new Size(5, 5), new Point(1, 1));
                         CvInvoke.MorphologyEx(rotated, rotated, MorphOp.Close, element, new Point(-1, -1), 1, BorderType.Constant, CvInvoke.MorphologyDefaultBorderValue);
-                        //CvInvoke.Dilate(canny, canny, null, new System.Drawing.Point(-1, -1), 3, BorderType.Constant, CvInvoke.MorphologyDefaultBorderValue);
-
-                        //_overlay.SetImageBitmap(canny.Bitmap);
-                        //camera.AddCallbackBuffer(data);
-                        //return;
-                        // </test stuff>
 
                         // find contours
                         var contoursDetected = new VectorOfVectorOfPoint();
@@ -322,6 +333,9 @@ namespace XamarinFormsCameraPreview.Droid.Renderers
                 _cameraInfo = CameraHelper.GetCameraInfo();
 
                 _previewSize = CameraHelper.SetCameraParameters(_deviceOrientation, _cameraInfo, _camera, width, height, _buffers, _previewSize);
+
+                var previewResizeRatio = GetResizeRatio();
+                _resizedSize = new Size((int)(_previewSize.Width / previewResizeRatio), (int)(_previewSize.Height / previewResizeRatio));
 
                 _camera.StartPreview();
             }
