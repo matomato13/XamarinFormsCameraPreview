@@ -1,6 +1,11 @@
-﻿using UIKit;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 
-namespace XamarinFormsCameraPreview.iOS
+using Foundation;
+using UIKit;
+
+namespace App1.iOS
 {
     public class Application
     {
