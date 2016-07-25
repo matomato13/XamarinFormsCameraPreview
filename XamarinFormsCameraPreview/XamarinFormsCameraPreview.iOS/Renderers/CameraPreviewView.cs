@@ -4,7 +4,6 @@ using System.Linq;
 using AVFoundation;
 using CoreFoundation;
 using CoreGraphics;
-using CoreMedia;
 using CoreVideo;
 using Emgu.CV;
 using Emgu.CV.CvEnum;
@@ -51,14 +50,16 @@ namespace XamarinFormsCameraPreview.iOS.Renderers
         public override void Draw (CGRect rect)
         {
             base.Draw(rect);
-            _previewLayer.Frame = Bounds;
+
+            if(_previewLayer != null)
+            {
+                _previewLayer.Frame = Bounds;
+            }
         }
 
-        private void Initialize ()
+        private async void Initialize ()
         {
             BackgroundColor = UIColor.Black;
-
-            SubscribeToOrientationChanges();
 
             var device = AVCaptureDevice.DefaultDeviceWithMediaType(AVMediaType.Video);
             if(device == null)
@@ -67,11 +68,25 @@ namespace XamarinFormsCameraPreview.iOS.Renderers
                 return;
             }
 
+            var authorizationStatus = AVCaptureDevice.GetAuthorizationStatus(AVMediaType.Video);
+            if(authorizationStatus != AVAuthorizationStatus.Authorized)
+            {
+                var result = await AVCaptureDevice.RequestAccessForMediaTypeAsync(AVMediaType.Video);
+                if(!result)
+                {
+                    Debug.WriteLine("User denied access to camera");
+                    App.Current.MainPage.DisplayAlert("Error", "The app needs the camera permission for the capture to work.", "OK");
+                    return;
+                }
+            }
+
             var captureSession = new AVCaptureSession();
 
             ConnectCamera(captureSession, device);
             ConnectPreview(captureSession);
             ConnectOutput(captureSession);
+
+            SubscribeToOrientationChanges();
 
             captureSession.StartRunning();
 
@@ -268,33 +283,41 @@ namespace XamarinFormsCameraPreview.iOS.Renderers
 
         private void SubscribeToOrientationChanges ()
         {
+            // call it once here to fix the orientation on the first startup
+            SetOrientation(UIDevice.CurrentDevice.Orientation);
+
             _orientationNotification = UIDevice.Notifications.ObserveOrientationDidChange((sender, args) => {
-                var degrees = 0;
-                switch(UIDevice.CurrentDevice.Orientation)
-                {
-                    case UIDeviceOrientation.FaceDown:
-                    case UIDeviceOrientation.FaceUp:
-                        return;
-                    case UIDeviceOrientation.PortraitUpsideDown:
-                        degrees = 180;
-                        _previewLayer.Connection.VideoOrientation = AVCaptureVideoOrientation.PortraitUpsideDown;
-                        break;
-                    case UIDeviceOrientation.LandscapeLeft:
-                        degrees = 90;
-                        _previewLayer.Connection.VideoOrientation = AVCaptureVideoOrientation.LandscapeRight;
-                        break;
-                    case UIDeviceOrientation.LandscapeRight:
-                        degrees = 270;
-                        _previewLayer.Connection.VideoOrientation = AVCaptureVideoOrientation.LandscapeLeft;
-                        break;
-                    default:
-                        degrees = 0;
-                        _previewLayer.Connection.VideoOrientation = AVCaptureVideoOrientation.Portrait;
-                        break;
-                }
-                _rotationAngle = (90 - degrees + 360) % 360;
-                _previewLayer.Frame = Bounds;
+                SetOrientation(UIDevice.CurrentDevice.Orientation);
             });
+        }
+
+        private void SetOrientation (UIDeviceOrientation orientation)
+        {
+            var degrees = 0;
+            switch(orientation)
+            {
+                case UIDeviceOrientation.FaceDown:
+                case UIDeviceOrientation.FaceUp:
+                    return;
+                case UIDeviceOrientation.PortraitUpsideDown:
+                    degrees = 180;
+                    _previewLayer.Connection.VideoOrientation = AVCaptureVideoOrientation.PortraitUpsideDown;
+                    break;
+                case UIDeviceOrientation.LandscapeLeft:
+                    degrees = 90;
+                    _previewLayer.Connection.VideoOrientation = AVCaptureVideoOrientation.LandscapeRight;
+                    break;
+                case UIDeviceOrientation.LandscapeRight:
+                    degrees = 270;
+                    _previewLayer.Connection.VideoOrientation = AVCaptureVideoOrientation.LandscapeLeft;
+                    break;
+                default:
+                    degrees = 0;
+                    _previewLayer.Connection.VideoOrientation = AVCaptureVideoOrientation.Portrait;
+                    break;
+            }
+            _rotationAngle = (90 - degrees + 360) % 360;
+            _previewLayer.Frame = Bounds;
         }
 
         private void ConnectCamera (AVCaptureSession captureSession, AVCaptureDevice device)
@@ -302,8 +325,8 @@ namespace XamarinFormsCameraPreview.iOS.Renderers
             captureSession.SessionPreset = AVCaptureSession.PresetHigh;
 
             NSError error;
-
             var input = new AVCaptureDeviceInput(device, out error);
+
             captureSession.AddInput(input);
         }
 
