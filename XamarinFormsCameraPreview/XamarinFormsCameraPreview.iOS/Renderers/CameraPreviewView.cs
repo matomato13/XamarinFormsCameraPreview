@@ -12,6 +12,9 @@ using Emgu.CV.Structure;
 using Emgu.CV.Util;
 using Foundation;
 using UIKit;
+using Xamarin.Forms;
+using XamarinFormsCameraPreview.Helpers;
+using XamarinFormsCameraPreview.Views;
 using Point = System.Drawing.Point;
 using Size = System.Drawing.Size;
 
@@ -24,6 +27,12 @@ namespace XamarinFormsCameraPreview.iOS.Renderers
         private AVCaptureVideoPreviewLayer _previewLayer;
         private OutputRecorder _outputRecorder;
         private DispatchQueue _queue;
+        private bool _busy;
+        private UIImage _lastPreviewFrame;
+        private Point[] _lastContourDetected;
+        private Size _resizedSize;
+        private Size _previewSize;
+        private static int _rotationAngle;
 
         public static UIImageView ImageView;
 
@@ -44,68 +53,7 @@ namespace XamarinFormsCameraPreview.iOS.Renderers
             _previewLayer.Frame = Bounds;
         }
 
-        private static int _rotationAngle;
-
-        private void SubscribeToOrientationChanges ()
-        {
-            _orientationNotification = UIDevice.Notifications.ObserveOrientationDidChange((sender, args) => {
-                var degrees = 0;
-                switch(UIDevice.CurrentDevice.Orientation)
-                {
-                    case UIDeviceOrientation.PortraitUpsideDown:
-                        degrees = 180;
-                        _previewLayer.Connection.VideoOrientation = AVCaptureVideoOrientation.PortraitUpsideDown;
-                        break;
-                    case UIDeviceOrientation.LandscapeLeft:
-                        degrees = 90;
-                        _previewLayer.Connection.VideoOrientation = AVCaptureVideoOrientation.LandscapeRight;
-                        break;
-                    case UIDeviceOrientation.LandscapeRight:
-                        degrees = 270;
-                        _previewLayer.Connection.VideoOrientation = AVCaptureVideoOrientation.LandscapeLeft;
-                        break;
-                    default:
-                        degrees = 0;
-                        _previewLayer.Connection.VideoOrientation = AVCaptureVideoOrientation.Portrait;
-                        break;
-                }
-                _rotationAngle = (90 - degrees + 360) % 360;
-                _previewLayer.Frame = Bounds;
-            });
-        }
-
-        private void ConnectCamera (AVCaptureSession captureSession, AVCaptureDevice device)
-        {
-            NSError error;
-
-            var input = new AVCaptureDeviceInput(device, out error);
-            captureSession.AddInput(input);
-        }
-
-        private void ConnectPreview (AVCaptureSession captureSession)
-        {
-            _previewLayer = new AVCaptureVideoPreviewLayer(captureSession) {
-                VideoGravity = AVLayerVideoGravity.ResizeAspectFill,
-                Frame = Bounds
-            };
-            Layer.AddSublayer(_previewLayer);
-        }
-
-        private void ConnectOutput (AVCaptureSession captureSession)
-        {
-            var settings = new CVPixelBufferAttributes { PixelFormatType = CVPixelFormatType.CV32BGRA };
-
-            // create a VideoDataOutput and add it to the session
-            using(var output = new AVCaptureVideoDataOutput { WeakVideoSettings = settings.Dictionary })
-            {
-                _queue = new DispatchQueue("myQueue");
-                _outputRecorder = new OutputRecorder();
-                output.SetSampleBufferDelegate(_outputRecorder, _queue);
-                captureSession.AddOutput(output);
-            }
-        }
-
-        private void Initialize()
+        private void Initialize ()
         {
             BackgroundColor = UIColor.Black;
 
@@ -139,95 +87,7 @@ namespace XamarinFormsCameraPreview.iOS.Renderers
             });
         }
 
-        private static bool _disable;
-        public void Toggle ()
-        {
-            _disable = !_disable;
-        }
-
-        public class OutputRecorder : AVCaptureVideoDataOutputSampleBufferDelegate
-        {
-            private Size _resizedSize;
-
-            public override void DidOutputSampleBuffer (AVCaptureOutput captureOutput, CMSampleBuffer sampleBuffer, AVCaptureConnection connection)
-            {
-                try
-                {
-                    var image = ImageFromSampleBuffer(sampleBuffer);
-
-                    SetPreviewSize(image.Size);
-
-                    var contourImage = ProcessImage(image, _resizedSize);
-                    if(contourImage == null)
-                    {
-                        return;
-                    }
-
-                    // Do something with the image, we just stuff it in our main view.
-                    ImageView.BeginInvokeOnMainThread(() => {
-                        TryDispose(ImageView.Image);
-                        ImageView.Image = _disable ? null : contourImage;
-                    });
-                }
-                catch(Exception e)
-                {
-                    Console.WriteLine(e);
-                }
-                finally
-                {
-                    sampleBuffer.Dispose();
-                }
-            }
-
-            private void SetPreviewSize (CGSize size)
-            {
-                var width = (int)(size.Width / 3);
-                var height = (int)(size.Height / 3);
-
-                _resizedSize = new Size(width, height);
-            }
-
-            private UIImage ImageFromSampleBuffer (CMSampleBuffer sampleBuffer)
-            {
-                // Get the CoreVideo image
-                using(var pixelBuffer = sampleBuffer.GetImageBuffer() as CVPixelBuffer)
-                {
-                    // Lock the base address
-                    pixelBuffer.Lock(CVPixelBufferLock.None);
-
-                    // Get the number of bytes per row for the pixel buffer
-                    var baseAddress = pixelBuffer.BaseAddress;
-                    var bytesPerRow = (int)pixelBuffer.BytesPerRow;
-                    var width = (int)pixelBuffer.Width;
-                    var height = (int)pixelBuffer.Height;
-                    var flags = CGBitmapFlags.PremultipliedFirst | CGBitmapFlags.ByteOrder32Little;
-
-                    // Create a CGImage on the RGB colorspace from the configured parameter above
-                    using(var cs = CGColorSpace.CreateDeviceRGB())
-                    {
-                        using(var context = new CGBitmapContext(baseAddress, width, height, 8, bytesPerRow, cs, (CGImageAlphaInfo)flags))
-                        {
-                            using(CGImage cgImage = context.ToImage())
-                            {
-                                pixelBuffer.Unlock(CVPixelBufferLock.None);
-                                return UIImage.FromImage(cgImage);
-                            }
-                        }
-                    }
-                }
-            }
-
-            private void TryDispose (IDisposable obj)
-            {
-                obj?.Dispose();
-            }
-        }
-
-        private static bool _busy;
-        private static UIImage _lastPreviewFrame;
-        private static Point[] _lastContourDetected;
-
-        private static UIImage ProcessImage (UIImage image, Size resizedSize)
+        private UIImage ProcessImage (UIImage image)
         {
             var debug = false;
 
@@ -240,13 +100,15 @@ namespace XamarinFormsCameraPreview.iOS.Renderers
                     // keep it for later if needed
                     _lastPreviewFrame = image;
 
+                    SetPreviewSize(image.Size);
+
                     using(var grey = new Image<Gray, byte>(image))
-                    using(var resized = new Image<Gray, byte>(resizedSize))
-                    using(var gaussian = new Image<Gray, byte>(resizedSize))
-                    using(var canny = new Image<Gray, byte>(resizedSize))
+                    using(var resized = new Image<Gray, byte>(_resizedSize))
+                    using(var gaussian = new Image<Gray, byte>(_resizedSize))
+                    using(var canny = new Image<Gray, byte>(_resizedSize))
                     {
                         // resize to make image processing faster
-                        CvInvoke.Resize(grey, resized, resizedSize);
+                        CvInvoke.Resize(grey, resized, _resizedSize);
 
                         // blur to make edge detection easier
                         CvInvoke.GaussianBlur(resized, gaussian, new Size(5, 5), 0);
@@ -258,7 +120,8 @@ namespace XamarinFormsCameraPreview.iOS.Renderers
                         var rotated = canny.Rotate(_rotationAngle, new Gray(255), false);
 
                         // helps closing contours
-                        var element = CvInvoke.GetStructuringElement(ElementShape.Rectangle, new Size(5, 5), new Point(1, 1));
+                        var morphSize = 1;
+                        var element = CvInvoke.GetStructuringElement(ElementShape.Rectangle, new Size(2*morphSize+1, 2*morphSize+1), new Point(morphSize, morphSize));
                         CvInvoke.MorphologyEx(rotated, rotated, MorphOp.Close, element, new Point(-1, -1), 1, BorderType.Constant, CvInvoke.MorphologyDefaultBorderValue);
 
                         // find contours
@@ -277,7 +140,7 @@ namespace XamarinFormsCameraPreview.iOS.Renderers
                             for(var j = 0; j < edges.Length; j++)
                             {
                                 var angle = Math.Abs(edges[(j + 1) % edges.Length].GetExteriorAngleDegree(edges[j]));
-                                if(angle < 60 || angle > 120)
+                                if(angle < 75 || angle > 105)
                                 {
                                     isRectangle = false;
                                     break;
@@ -332,6 +195,145 @@ namespace XamarinFormsCameraPreview.iOS.Renderers
             }
 
             return null;
+        }
+
+        public void OnPictureRequired (object sender, EventArgs e)
+        {
+            var preview = sender as CameraPreview;
+            if(preview != null)
+            {
+                var getColoredResult = true;
+
+                if(_lastPreviewFrame == null
+                    || _lastContourDetected == null
+                    || _lastContourDetected.Length == 0)
+                {
+                    return;
+                }
+
+                try
+                {
+                    _busy = true;
+
+                    var width = _previewSize.Width;
+                    var height = _previewSize.Height;
+
+                    using(var bgr = new Image<Bgr, byte>(_lastPreviewFrame))
+                    {
+                        var image = bgr.Rotate(_rotationAngle, new Bgr(255, 255, 255), false);
+                        var rotatedSize = image.Size.Width > image.Size.Height
+                            ? _resizedSize
+                            : new Size(_resizedSize.Height, _resizedSize.Width);
+
+                        var orderedPoints = GeometryHelper.ToScaledPointFArray(_lastContourDetected, image.Size, rotatedSize);
+                        var warped = GeometryHelper.FourPointTransform(image, orderedPoints);
+
+                        if(!getColoredResult)
+                        {
+                            // convert to grayscale
+                            var gray = warped.Convert<Gray, byte>();
+
+                            // cleanup the image (if needed, this needs to be improved)
+                            CvInvoke.AdaptiveThreshold(gray, gray, 255, AdaptiveThresholdType.GaussianC, ThresholdType.Binary, 11, 2);
+
+                            ProposeResultToUser(preview, gray);
+                        }
+                        else
+                        {
+                            ProposeResultToUser(preview, warped);
+                        }
+                    }
+
+                    _lastPreviewFrame = null;
+                    _lastContourDetected = null;
+                }
+                finally
+                {
+                    _busy = false;
+                }
+            }
+        }
+
+        private void ProposeResultToUser<TColor> (CameraPreview preview, Image<TColor, byte> image)
+            where TColor : struct, IColor
+        {
+            var uiImage = image.ToUIImage();
+            //SaveImage(uiImage, "result.png");
+
+            preview.OnPictureTaken(new Models.Image(
+                ImageSource.FromStream(() => uiImage.AsPNG().AsStream())
+            ));
+        }
+
+        private void SubscribeToOrientationChanges ()
+        {
+            _orientationNotification = UIDevice.Notifications.ObserveOrientationDidChange((sender, args) => {
+                var degrees = 0;
+                switch(UIDevice.CurrentDevice.Orientation)
+                {
+                    case UIDeviceOrientation.PortraitUpsideDown:
+                        degrees = 180;
+                        _previewLayer.Connection.VideoOrientation = AVCaptureVideoOrientation.PortraitUpsideDown;
+                        break;
+                    case UIDeviceOrientation.LandscapeLeft:
+                        degrees = 90;
+                        _previewLayer.Connection.VideoOrientation = AVCaptureVideoOrientation.LandscapeRight;
+                        break;
+                    case UIDeviceOrientation.LandscapeRight:
+                        degrees = 270;
+                        _previewLayer.Connection.VideoOrientation = AVCaptureVideoOrientation.LandscapeLeft;
+                        break;
+                    default:
+                        degrees = 0;
+                        _previewLayer.Connection.VideoOrientation = AVCaptureVideoOrientation.Portrait;
+                        break;
+                    case UIDeviceOrientation.FaceDown:
+                    case UIDeviceOrientation.FaceUp:
+                        return;
+                }
+                _rotationAngle = (90 - degrees + 360) % 360;
+                _previewLayer.Frame = Bounds;
+            });
+        }
+
+        private void ConnectCamera (AVCaptureSession captureSession, AVCaptureDevice device)
+        {
+            NSError error;
+
+            var input = new AVCaptureDeviceInput(device, out error);
+            captureSession.AddInput(input);
+        }
+
+        private void ConnectPreview (AVCaptureSession captureSession)
+        {
+            _previewLayer = new AVCaptureVideoPreviewLayer(captureSession) {
+                VideoGravity = AVLayerVideoGravity.ResizeAspectFill,
+                Frame = Bounds
+            };
+            Layer.AddSublayer(_previewLayer);
+        }
+
+        private void ConnectOutput (AVCaptureSession captureSession)
+        {
+            var settings = new CVPixelBufferAttributes { PixelFormatType = CVPixelFormatType.CV32BGRA };
+
+            // create a VideoDataOutput and add it to the session
+            using(var output = new AVCaptureVideoDataOutput { WeakVideoSettings = settings.Dictionary })
+            {
+                _queue = new DispatchQueue("myQueue");
+                _outputRecorder = new OutputRecorder(image => ProcessImage(image));
+                output.SetSampleBufferDelegate(_outputRecorder, _queue);
+                captureSession.AddOutput(output);
+            }
+        }
+
+        private void SetPreviewSize (CGSize size)
+        {
+            if(_previewSize.Width != size.Width)
+            {
+                _previewSize = new Size((int)size.Width, (int)size.Height);
+                _resizedSize = new Size(_previewSize.Width / 2, _previewSize.Height / 2);
+            }
         }
 
         protected override void Dispose (bool disposing)

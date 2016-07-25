@@ -44,7 +44,7 @@ namespace XamarinFormsCameraPreview.Views
 		/// In this function, PictureTaken event and PictureTakenCommand are called.
 		/// </summary>
 		/// <param name="image">taken picture, must not be null</param>
-		public void OnPictureTaken(Models.IImage image)
+		public void OnPictureTaken(Models.Image image)
 		{
 			if (image == null) { throw new ArgumentNullException("image"); }
 
@@ -73,11 +73,11 @@ namespace XamarinFormsCameraPreview.Views
 	/// </summary>
 	public sealed class PictureTakenEventArgs : EventArgs
 	{
-		public PictureTakenEventArgs(Models.IImage image)
+		public PictureTakenEventArgs(Models.Image image)
 		{
 			Image = image;
 		}
 
-		public Models.IImage Image { get; private set; }
+		public Models.Image Image { get; private set; }
 	}
 }

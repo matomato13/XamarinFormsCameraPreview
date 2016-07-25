@@ -15,6 +15,7 @@ using Emgu.CV.Structure;
 using Emgu.CV.Util;
 using Xamarin.Forms;
 using Xamarin.Forms.Platform.Android;
+using XamarinFormsCameraPreview.Helpers;
 using XamarinFormsCameraPreview.Views;
 using Camera = Android.Hardware.Camera;
 using Point = System.Drawing.Point;
@@ -147,10 +148,7 @@ namespace XamarinFormsCameraPreview.Droid.Renderers
                 ms.Position = 0;
 
                 // load image source from stream
-                preview.OnPictureTaken(new Models.AndroidImage
-                {
-                    ImageSource = ImageSource.FromStream(() => ms)
-                });
+                preview.OnPictureTaken(new Models.Image(ImageSource.FromStream(() => ms)));
 
                 // NOTE: Do not dispose memory stream if it succeeded.
                 // ImageSource is loaded in background so ms should not be disposed immediately.
@@ -222,7 +220,8 @@ namespace XamarinFormsCameraPreview.Droid.Renderers
                         var rotated = canny.Rotate(CameraHelper.GetRotationAngle(_deviceOrientation, _cameraInfo), new Gray(255), false);
                         
                         // helps closing contours
-                        var element = CvInvoke.GetStructuringElement(ElementShape.Rectangle, new Size(5, 5), new Point(1, 1));
+                        var morphSize = 1;
+                        var element = CvInvoke.GetStructuringElement(ElementShape.Rectangle, new Size(2 * morphSize + 1, 2 * morphSize + 1), new Point(morphSize, morphSize));
                         CvInvoke.MorphologyEx(rotated, rotated, MorphOp.Close, element, new Point(-1, -1), 1, BorderType.Constant, CvInvoke.MorphologyDefaultBorderValue);
 
                         // find contours
@@ -242,7 +241,7 @@ namespace XamarinFormsCameraPreview.Droid.Renderers
                             for (var j = 0; j < edges.Length; j++)
                             {
                                 var angle = Math.Abs(edges[(j + 1) % edges.Length].GetExteriorAngleDegree(edges[j]));
-                                if (angle < 50 || angle > 130)
+                                if (angle < 75 || angle > 105)
                                 {
                                     isRectangle = false;
                                     break;

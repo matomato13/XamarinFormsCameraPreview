@@ -17,22 +17,13 @@ namespace XamarinFormsCameraPreview.iOS.Renderers
 
             if(e.OldElement == null)
             {
-                // get CameraPreview object and set event handler
                 var preview = e.NewElement;
-                preview.PictureRequired += OnPictureRequired;
 
                 _cameraPreviewView = new CameraPreviewView();
 
-                SetNativeControl(_cameraPreviewView);
-            }
-        }
+                preview.PictureRequired += _cameraPreviewView.OnPictureRequired;
 
-        private void OnPictureRequired (object sender, EventArgs e)
-        {
-            var preview = sender as CameraPreview;
-            if(preview != null)
-            {
-                _cameraPreviewView.Toggle();
+                SetNativeControl(_cameraPreviewView);
             }
         }
 

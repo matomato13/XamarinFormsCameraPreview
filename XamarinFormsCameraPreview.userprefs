@@ -1,9 +1,30 @@
 ﻿<Properties StartupItem="XamarinFormsCameraPreview/XamarinFormsCameraPreview.iOS/XamarinFormsCameraPreview.iOS.csproj">
-  <MonoDevelop.Ide.Workbench />
+  <MonoDevelop.Ide.Workbench ActiveDocument="XamarinFormsCameraPreview/XamarinFormsCameraPreview.Android/Renderers/CameraPreviewRenderer.cs">
+    <Files>
+      <File FileName="XamarinFormsCameraPreview/XamarinFormsCameraPreview.iOS/Renderers/CameraPreviewView.cs" Line="258" Column="51" />
+      <File FileName="XamarinFormsCameraPreview/XamarinFormsCameraPreview.Android/Renderers/CameraPreviewRenderer.cs" Line="89" Column="33" />
+    </Files>
+    <Pads>
+      <Pad Id="ProjectPad">
+        <State name="__root__">
+          <Node name="XamarinFormsCameraPreview" expanded="True">
+            <Node name="XamarinFormsCameraPreview.Android" expanded="True">
+              <Node name="Properties" expanded="True" />
+              <Node name="Renderers" expanded="True">
+                <Node name="CameraPreviewRenderer.cs" selected="True" />
+              </Node>
+            </Node>
+            <Node name="XamarinFormsCameraPreview.iOS" expanded="True">
+              <Node name="Renderers" expanded="True" />
+            </Node>
+          </Node>
+        </State>
+      </Pad>
+    </Pads>
+  </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
-  <MonoDevelop.Ide.DebuggingService.Breakpoints>
-    <BreakpointStore />
-  </MonoDevelop.Ide.DebuggingService.Breakpoints>
+  <MonoDevelop.Ide.DebuggingService.Breakpoints />
   <MonoDevelop.Ide.DebuggingService.PinnedWatches />
   <MonoDevelop.Ide.ItemProperties.XamarinFormsCameraPreview.iOS PreferredExecutionTarget="MonoDevelop.IPhone.IPhoneDeviceTarget" />
+  <MonoDevelop.Ide.ItemProperties.XamarinFormsCameraPreview.Android PreferredExecutionTarget="Android.092116430222191a" />
 </Properties>
