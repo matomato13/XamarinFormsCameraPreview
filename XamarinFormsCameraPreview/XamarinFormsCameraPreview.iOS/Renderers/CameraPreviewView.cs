@@ -33,6 +33,7 @@ namespace XamarinFormsCameraPreview.iOS.Renderers
         private Size _resizedSize;
         private Size _previewSize;
         private static int _rotationAngle;
+        private const double TargetPixelArea = 853 * 512; // the image processing works best with this resolution, we resize the image to have something similar
 
         public static UIImageView ImageView;
 
@@ -271,6 +272,9 @@ namespace XamarinFormsCameraPreview.iOS.Renderers
                 var degrees = 0;
                 switch(UIDevice.CurrentDevice.Orientation)
                 {
+                    case UIDeviceOrientation.FaceDown:
+                    case UIDeviceOrientation.FaceUp:
+                        return;
                     case UIDeviceOrientation.PortraitUpsideDown:
                         degrees = 180;
                         _previewLayer.Connection.VideoOrientation = AVCaptureVideoOrientation.PortraitUpsideDown;
@@ -287,9 +291,6 @@ namespace XamarinFormsCameraPreview.iOS.Renderers
                         degrees = 0;
                         _previewLayer.Connection.VideoOrientation = AVCaptureVideoOrientation.Portrait;
                         break;
-                    case UIDeviceOrientation.FaceDown:
-                    case UIDeviceOrientation.FaceUp:
-                        return;
                 }
                 _rotationAngle = (90 - degrees + 360) % 360;
                 _previewLayer.Frame = Bounds;
@@ -298,6 +299,8 @@ namespace XamarinFormsCameraPreview.iOS.Renderers
 
         private void ConnectCamera (AVCaptureSession captureSession, AVCaptureDevice device)
         {
+            captureSession.SessionPreset = AVCaptureSession.PresetHigh;
+
             NSError error;
 
             var input = new AVCaptureDeviceInput(device, out error);
@@ -332,8 +335,16 @@ namespace XamarinFormsCameraPreview.iOS.Renderers
             if(_previewSize.Width != size.Width)
             {
                 _previewSize = new Size((int)size.Width, (int)size.Height);
-                _resizedSize = new Size(_previewSize.Width / 2, _previewSize.Height / 2);
+
+                var resizeRatio = GetResizeRatio(_previewSize);
+                _resizedSize = new Size((int)(_previewSize.Width / resizeRatio), (int)(_previewSize.Height / resizeRatio));
             }
+        }
+
+        private double GetResizeRatio (Size previewSize)
+        {
+            double previewPixelRatio = previewSize.Width * previewSize.Height;
+            return Math.Round(Math.Sqrt(previewPixelRatio / TargetPixelArea), 3);
         }
 
         protected override void Dispose (bool disposing)
