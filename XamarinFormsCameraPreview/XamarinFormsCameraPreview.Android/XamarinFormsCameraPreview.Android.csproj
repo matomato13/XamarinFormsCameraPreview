@@ -118,6 +118,7 @@
     <Compile Include="MainActivity.cs" />
     <Compile Include="Renderers\CameraHelper.cs" />
     <Compile Include="Renderers\CameraPreviewRenderer.cs" />
+    <Compile Include="Renderers\CameraPreviewView.cs" />
     <Compile Include="Renderers\DelegatePictureCallback.cs" />
     <Compile Include="Resources\Resource.Designer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

@@ -1,5 +1,4 @@
-﻿using System;
-using Xamarin.Forms;
+﻿using Xamarin.Forms;
 using Xamarin.Forms.Platform.iOS;
 using XamarinFormsCameraPreview.Views;
 
@@ -9,34 +8,18 @@ namespace XamarinFormsCameraPreview.iOS.Renderers
 {
     public class CameraPreviewRenderer : ViewRenderer<CameraPreview, CameraPreviewView>
     {
-        private CameraPreviewView _cameraPreviewView;
-
 		protected override void OnElementChanged(ElementChangedEventArgs<CameraPreview> e)
         {
             base.OnElementChanged(e);
 
-            if(e.OldElement == null)
+            if (e.OldElement == null)
             {
+                var cameraPreviewView = new CameraPreviewView();
+
                 var preview = e.NewElement;
+                preview.PictureRequired += cameraPreviewView.OnPictureRequired;
 
-                _cameraPreviewView = new CameraPreviewView();
-
-                preview.PictureRequired += _cameraPreviewView.OnPictureRequired;
-
-                SetNativeControl(_cameraPreviewView);
-            }
-        }
-
-        protected override void OnElementPropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
-        {
-            base.OnElementPropertyChanged(sender, e);
-
-            switch (e.PropertyName)
-            {
-                case "Camera":
-                    break;
-                default:
-                    break;
+                SetNativeControl(cameraPreviewView);
             }
         }
     }
