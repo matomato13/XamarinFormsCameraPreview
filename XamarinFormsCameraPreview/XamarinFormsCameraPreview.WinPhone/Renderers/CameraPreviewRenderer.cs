@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Controls;
 
 using Microsoft.Devices;
@@ -127,9 +123,7 @@ namespace XamarinFormsCameraPreview.WinPhone.Renderers
 		/// <param name="e"></param>
 		void camera__CaptureImageAvailable(object sender, ContentReadyEventArgs e)
 		{
-			var image = new Models.WPImage {
-				ImageSource = ImageSource.FromStream(() => e.ImageStream)
-			};
+			var image = new Models.Image(ImageSource.FromStream(() => e.ImageStream));
 			cameraPreview_.OnPictureTaken(image);
 		}
 	}
