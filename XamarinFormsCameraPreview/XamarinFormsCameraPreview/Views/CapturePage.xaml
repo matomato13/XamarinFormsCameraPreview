@@ -15,8 +15,8 @@
 			Clicked="OnCaptureButtonClicked"
 			HorizontalOptions="Center"
 			VerticalOptions="Center"
-			AbsoluteLayout.LayoutBounds="0, 1.0, 1.0, 0.1"
-			AbsoluteLayout.LayoutFlags="All"
+			AbsoluteLayout.LayoutBounds="0.5, 1.0, -1.0, -1.0"
+			AbsoluteLayout.LayoutFlags="PositionProportional"
 			/>
 	</AbsoluteLayout>
 </ContentPage>
