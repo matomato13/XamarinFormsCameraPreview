@@ -329,8 +329,8 @@ namespace XamarinFormsCameraPreview.Droid.Renderers
                 var previewResizeRatio = GetResizeRatio();
                 _resizedSize = new Size((int)(_previewSize.Width / previewResizeRatio), (int)(_previewSize.Height / previewResizeRatio));
 
-                _camera.StartPreview();
                 _camera.SetNonMarshalingPreviewCallback(this);
+                _camera.StartPreview();
             }
         }
 
